@@ -80,12 +80,24 @@ module.exports = function (app) {
 
             }
             else {
-                //TODO: support adding topics
+
+                consumer.instance.addTopics([req.params.topic], function (err, data) {
+                    if (err) return res.status(500).json({error: err});
+                    res.json(data);
+                }, true);
+
             }
             consumer.topics.push(req.params.topic);
         }
         else {
-            var messages = consumer.messages.splice(0, consumer.messages.length);
+            var messages = [];
+            consumer.messages = consumer.messages.filter(function (m) {
+                if (m.topic == topic) {
+                    messages.push(m);
+                    return false;
+                }
+                return true;
+            });
             if (messages.length == 0) {
                 return res.json([]);
             }
