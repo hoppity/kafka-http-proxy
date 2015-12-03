@@ -1,0 +1,14 @@
+{
+  "name": "kafka-http-proxy",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.14.1",
+    "config-node": "^1.2.2",
+    "express": "^4.13.3",
+    "kafka-node": "^0.2.29",
+    "promise": "^7.0.4"
+  }
+}
