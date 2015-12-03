@@ -9,6 +9,7 @@
     "config-node": "^1.2.2",
     "express": "^4.13.3",
     "kafka-node": "^0.2.29",
+    "murmurhash-js": "^1.0.0",
     "promise": "^7.0.4"
   }
 }
