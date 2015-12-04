@@ -118,6 +118,22 @@ module.exports = function (app) {
         }
     });
 
+    app.post('/consumers/:group/instances/:id/offsets', function (req, res) {
+        var id = getConsumerId(req.params.group, req.params.id),
+            consumer = consumers[id];
+
+        if (!consumer) {
+            return res.status(404).json({ error: 'Consumer not found.' });
+        }
+
+        consumer.instance.commit(true, function (e, data) {
+            if (e) {
+                return res.status(500).json({ error: e });
+            }
+            return res.json([]);
+        });
+    });
+
     app.delete('/consumers/:group/instances/:id', function (req, res) {
         
         var id = getConsumerId(req.params.group, req.params.id),

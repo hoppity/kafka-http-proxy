@@ -17,7 +17,7 @@ request.post(baseUri + '/consumers/test.' + 1449182267952)
         });
     })
     .then(function (r) {
-        console.log(r);
+        console.log('should not have received messages: ' + r);
         var options = {
             uri: baseUri + '/topics/ducastest2',
             method: 'POST',
@@ -28,7 +28,7 @@ request.post(baseUri + '/consumers/test.' + 1449182267952)
         return request.post(options);
     })
     .then(function (r) {
-        console.log(r);
+        console.log('published messages: ' + JSON.stringify(r));
         return new Promise(function (res) {
             setTimeout(function() {
                 res(r)
@@ -43,9 +43,9 @@ request.post(baseUri + '/consumers/test.' + 1449182267952)
                 console.log('get');
                 request.get(consumerUri + '/topics/ducastest2')
                     .then(function (r) {
+                        process.stdout.write('.');
                         var result = JSON.parse(r);
                         i++;
-                        console.log(result);
                         if (result.length > 0)
                             res(result);
                         else if (i == max)
@@ -61,7 +61,11 @@ request.post(baseUri + '/consumers/test.' + 1449182267952)
         });
     })
     .then(function (r) {
-        console.log(r);
+        console.log('got messages: ' + JSON.stringify(r));
+        return request.post(consumerUri + '/offsets');
+    })
+    .then(function (r) {
+        console.log('committed offsets: ' + r);
     })
     .catch(function (e) {
         console.error(e);
