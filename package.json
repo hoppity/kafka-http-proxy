@@ -6,9 +6,11 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.14.1",
+    "bunyan": "^1.5.1",
     "config-node": "^1.2.2",
     "express": "^4.13.3",
     "kafka-node": "^0.2.29",
+    "moment": "^2.10.6",
     "murmurhash-js": "^1.0.0",
     "promise": "^7.0.4",
     "uuid": "^2.0.1"

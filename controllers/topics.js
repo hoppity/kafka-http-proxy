@@ -6,6 +6,8 @@ var kafka = require('kafka-node'),
     compression = config.kafka.compression || 0,
     seed = 0x9747b28c,
 
+    logger = require('../logger.js'),
+
     refreshTopic = function (topic, cb) {
         client.topicExists([topic], function (err, data) {
             if (err) return cb(err);
@@ -23,7 +25,10 @@ module.exports = function (app) {
         producer.createTopics([req.params.topic],
             false,
             function (err, data) {
-                if (err) return res.status(500).json({ error: err });
+                if (err) {
+                    //logger.error({error: err, request: req, response: res});
+                    return res.status(500).json({ error: err });
+                }
                 res.json({ message: data });
             });
     });
@@ -32,7 +37,10 @@ module.exports = function (app) {
         var topic = req.params.topic;
 
         refreshTopic(topic, function (err) {
-            if (err) return res.status(500).json({ error: err });
+            if (err) {
+                //logger.error({error: err, request: req, response: res});
+                return res.status(500).json({ error: err });
+            }
 
             var numPartitions = client.topicPartitions[topic].length,
                 messages = req.body.payload.map(function (p) {
@@ -48,7 +56,10 @@ module.exports = function (app) {
                 });
 
             producer.send(messages, function (err, data) {
-                if (err) return res.status(500).json({error: err});
+                if (err) {
+                    //logger.error({error: err, request: req, response: res});
+                    return res.status(500).json({error: err});
+                }
                 res.json(data);
             });
         });
