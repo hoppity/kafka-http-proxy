@@ -1,12 +1,12 @@
 {
 	"kafka": {
-		"zkConnect": "192.168.33.10:2181",
-		"topic": "stocks"
+		"zkConnect": "192.168.33.10:2181"
 	},
 	"logging": {
 		"logName": "kafka-http-proxy",
 		"type": "console",
 		"filePath": "./logs/##Date##.log"
 	},
+	"accessLogPath": "access.log",
 	"port": 8085
 }
