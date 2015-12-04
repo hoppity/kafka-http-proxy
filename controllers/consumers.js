@@ -7,6 +7,9 @@ var kafka = require('kafka-node'),
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
     },
+    getConsumer = function (group, instanceId) {
+        return consumers[getConsumerId(group, instanceId)];
+    },
 
     createConsumerInstance = function (consumer, topic) {
         var client = new kafka.Client(config.kafka.zkConnect, 'kafka-rest-proxy');
@@ -78,8 +81,7 @@ module.exports = function (app) {
     });
 
     app.get('/consumers/:group/instances/:id/topics/:topic', function (req, res) {
-        var id = getConsumerId(req.params.group, req.params.id),
-            consumer = consumers[id],
+        var consumer = getConsumer(req.params.group, req.params.id),
             topic = req.params.topic;
 
         if (!consumer) {
@@ -119,8 +121,7 @@ module.exports = function (app) {
     });
 
     app.post('/consumers/:group/instances/:id/offsets', function (req, res) {
-        var id = getConsumerId(req.params.group, req.params.id),
-            consumer = consumers[id];
+        var consumer = getConsumer(req.params.group, req.params.id);
 
         if (!consumer) {
             return res.status(404).json({ error: 'Consumer not found.' });
