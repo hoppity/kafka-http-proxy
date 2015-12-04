@@ -64,12 +64,16 @@ module.exports = function (app) {
                 });
 
             producer.send(messages, function (err, data) {
-                console.log(arguments);
                 if (err) {
                     logger.error({error: err, request: req, response: res});
                     return res.status(500).json({error: err});
                 }
-                res.json(data);
+                var topicResult = data[topic];
+                var results = [];
+                for (var i in topicResult) {
+                    results.push({ partition: i, offset: topicResult[i] });
+                }
+                res.json({ offsets: results });
             });
         });
 
