@@ -4,8 +4,7 @@
 	},
 	"logging": {
 		"logName": "kafka-http-proxy",
-		"type": "console",
-		"filePath": "./logs/##Date##.log"
+        "level": "debug"
 	},
 	"accessLogPath": "access.log",
 	"port": 8085
