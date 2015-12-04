@@ -1,13 +1,23 @@
 var request = require('request-promise'),
     Promise = require('promise'),
+    now = Date.now(),
     baseUri = 'http://localhost:8085',
-    consumerUri;
+    topicUriSuffix = '/topics/test.' + now;
+    topicUri = baseUri + topicUriSuffix,
+    createConsumerUri = baseUri + '/consumers/test.' + now;
+var consumerUri,
+    consumerTopicUri;
 
-request.post(baseUri + '/consumers/test.' + 1449182267952)
+request.put(topicUri)
+    .then(function (r) {
+        console.log('created topic ' + r);
+        return request.post(createConsumerUri);
+    })
     .then(function (r) {
         console.log('created consumer ' + r);
         consumerUri = JSON.parse(r).base_uri;
-        return request.get(consumerUri + '/topics/ducastest2');
+        consumerTopicUri = consumerUri + topicUriSuffix;
+        return request.get(consumerTopicUri);
     })
     .then(function (r) {
         return new Promise(function (res) {
@@ -19,10 +29,13 @@ request.post(baseUri + '/consumers/test.' + 1449182267952)
     .then(function (r) {
         console.log('should not have received messages: ' + r);
         var options = {
-            uri: baseUri + '/topics/ducastest2',
+            uri: topicUri,
             method: 'POST',
             json: {
-                payload: [{ key: '123', value: '456' }]
+                records: [{ key: '123', value: '456' }]
+            },
+            headers: {
+                'Content-Type': 'application/vnd.kafka.v1+json'
             }
         };
         return request.post(options);
@@ -41,7 +54,7 @@ request.post(baseUri + '/consumers/test.' + 1449182267952)
         return new Promise(function (res, rej) {
             var poll = function () {
                 console.log('get');
-                request.get(consumerUri + '/topics/ducastest2')
+                request.get(consumerTopicUri)
                     .then(function (r) {
                         process.stdout.write('.');
                         var result = JSON.parse(r);
