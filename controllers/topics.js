@@ -34,6 +34,7 @@ module.exports = function (app) {
     });
 
     app.post('/topics/:topic', function (req, res) {
+
         var topic = req.params.topic;
 
         refreshTopic(topic, function (err) {
@@ -43,13 +44,13 @@ module.exports = function (app) {
             }
 
             var numPartitions = client.topicPartitions[topic].length,
-                messages = req.body.payload.map(function (p) {
+                messages = req.body.records.map(function (p) {
                     return {
                         topic: topic,
-                        messages: typeof(p.key) !== 'undefined'
+                        messages: p.key !== null && typeof p.key !== undefined
                             ? new kafka.KeyedMessage(p.key, p.value)
                             : p.value,
-                        partition: typeof(p.key) !== 'undefined'
+                        partition: p.key !== null && typeof p.key !== undefined
                             ? murmur.murmur2(p.key, seed) % numPartitions
                             : undefined
                     };
@@ -64,6 +65,6 @@ module.exports = function (app) {
             });
         });
 
-    })
+    });
 
 };
