@@ -6,8 +6,8 @@ var moment = require('moment');
 var createStreams = function() {
 	var streams = [
 			{
-				level: 'info',
-				stream : process.stout
+				level: 'debug',
+				stream : process.stdout
 			}
 		];
 

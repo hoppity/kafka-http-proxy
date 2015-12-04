@@ -7,15 +7,15 @@ var express = require('express'),
 
 app.use(bodyParser.json());
 
-app.use(function(err, req, res, next) {
-	if (err) {
-		logger.error({error: err, request: req, response: res});
-		next(err);
-	}
+app.use(function(req, res, next) {
+	logger.info({req: req, res: res}, config.logging.logName + ' Info Messages');
+	next();
 });
+
 
 require('./controllers/topics')(app);
 require('./controllers/consumers')(app);
+
 
 app.use(function errorHandler(err, req, res, next) {
     console.error(err);
