@@ -11,8 +11,8 @@ var express = require('express'),
 app.use(morgan('combined', { stream: accessLogStream }));
 
 app.use(function(req, res, next) {
-	logger.info({req: req, res: res}, config.logging.logName + ' Info Messages');
-	next();
+    logger.info({req: req, res: res}, config.logging.logName + ' Info Messages');
+    next();
 });
 
 app.use(bodyParser.json({ type: 'application/*+json' }));
