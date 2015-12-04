@@ -1,9 +1,18 @@
 var express = require('express'),
     app = express(),
     bodyParser = require('body-parser'),
-    config = require('config-node')();
+    config = require('config-node')(),
+    logger = require('./logger.js');
+
 
 app.use(bodyParser.json());
+
+app.use(function(err, req, res, next) {
+	if (err) {
+		logger.error({error: err, request: req, response: res});
+		next(err);
+	}
+});
 
 require('./controllers/topics')(app);
 require('./controllers/consumers')(app);
