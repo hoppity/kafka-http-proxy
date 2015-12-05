@@ -116,7 +116,7 @@ module.exports = function (app) {
                     value: m.value
                 };
             }) );
-            consumer.instance.commit(true);
+            if (consumer.instance.autoCommitEnable) consumer.instance.commit(true);
         }
     });
 
