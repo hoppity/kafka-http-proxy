@@ -69,7 +69,9 @@ module.exports = function (app) {
             autoCommitEnable: autoCommitEnable,
             instance: undefined,
             topics: [],
-            messages: []
+            messages: [],
+            created: new Date(),
+            lastPoll: Date.now()
         };
         consumers[id] = consumer;
 
@@ -117,6 +119,7 @@ module.exports = function (app) {
                 };
             }) );
             if (consumer.instance.autoCommitEnable) consumer.instance.commit(true);
+            consumer.lastPoll = Date.now();
         }
     });
 
