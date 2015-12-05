@@ -99,6 +99,8 @@ module.exports = function (app) {
         };
         consumers[id] = consumer;
 
+        logger.debug(consumer, 'New consumer.');
+
         res.json({
             instance_id: consumer.instanceId,
             base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.instanceId
@@ -133,7 +135,7 @@ module.exports = function (app) {
             if (messages.length == 0) {
                 return res.json([]);
             }
-            res.json( messages.map(function (m) {
+            res.json(messages.map(function (m) {
                 return {
                     topic: m.topic,
                     partition: m.partition,
@@ -141,8 +143,11 @@ module.exports = function (app) {
                     key: m.key.toString(),
                     value: m.value
                 };
-            }) );
-            if (consumer.instance.autoCommitEnable) consumer.instance.commit(true);
+            }));
+            if (consumer.autoCommitEnable) {
+                logger.debug({ consumer: consumer.id }, 'Autocommit.');
+                consumer.instance.commit(true);
+            }
             consumer.lastPoll = Date.now();
         }
     });
