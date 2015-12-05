@@ -1,0 +1,14 @@
+{
+    "kafka": {
+        "clientId": "kafka-http-proxy"
+    },
+    "logging": {
+        "logName": "kafka-http-proxy",
+        "level": "debug"
+    },
+    "accessLogPath": "access.log",
+    "port": 8085,
+    "consumer": {
+        "timeoutMs": 300000
+    }
+}

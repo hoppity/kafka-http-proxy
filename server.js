@@ -1,7 +1,7 @@
 var express = require('express'),
     app = express(),
     bodyParser = require('body-parser'),
-    config = require('config-node')(),
+    config = require('./config'),
     logger = require('./logger.js'),
 
     fs = require('fs'),

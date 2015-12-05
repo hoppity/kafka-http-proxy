@@ -1,6 +1,6 @@
 var kafka = require('kafka-node'),
     uuid = require('uuid'),
-    config = require('config-node')(),
+    config = require('../config'),
     consumers = new Object(),
     compression = config.kafka.compression || 0,
     logger = require('../logger'),
@@ -13,7 +13,7 @@ var kafka = require('kafka-node'),
     },
 
     createConsumerInstance = function (consumer, topic) {
-        var client = new kafka.Client(config.kafka.zkConnect, 'kafka-rest-proxy');
+        var client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId);
         consumer.instance = new kafka.HighLevelConsumer(client, [{
             topic: topic
         }], {
