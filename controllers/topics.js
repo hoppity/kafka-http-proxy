@@ -48,8 +48,8 @@ module.exports = function (app) {
 
             var numPartitions = client.topicPartitions[topic].length,
                 messages = req.body.records.map(function (p) {
-                    var hasKey = p.key !== null && typeof p.key !== undefined,
-                        hasPartition = p.partition !== null && typeof p.partition !== undefined,
+                    var hasKey = p.key !== null && typeof p.key !== 'undefined',
+                        hasPartition = p.partition !== null && typeof p.partition !== 'undefined',
                         result = {
                             topic: topic,
                             messages: hasKey ? new kafka.KeyedMessage(p.key, p.value) : p.value,
