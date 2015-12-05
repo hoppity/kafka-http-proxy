@@ -1,8 +1,9 @@
 var kafka = require('kafka-node'),
     uuid = require('uuid'),
     config = require('config-node')(),
-    consumers = {},
+    consumers = new Object(),
     compression = config.kafka.compression || 0,
+    logger = require('../logger'),
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
@@ -45,9 +46,31 @@ var kafka = require('kafka-node'),
         consumer.instance.on('offsetOutOfRange', function (e) {
             console.warn(e);
         });
+    },
+
+    consumerTimeoutMs = config.consumer.timoutMs,
+
+    deleteConsumer = function (consumer, res) {
+        logger.debug({ consumer: consumer.id }, 'Deleting and closing consumer.')
+        delete consumers[consumer.id];
+        consumer.instance.close(false, function () {
+            logger.debug({ consumer: consumer.id }, 'Consumer closed.')
+            if (!!res) res.json({});
+        });
+    },
+    timeoutConsumers = function () {
+        var timeoutTime = Date.now() - consumerTimeoutMs;
+        for (var i in consumers) {
+            var consumer = consumers[i];
+            if (consumer.lastPoll < timeoutTime) {
+                deleteConsumer(consumer);
+            }
+        }
     };
 
 module.exports = function (app) {
+
+    setInterval(timeoutConsumers, 10000);
 
     app.post('/consumers/:group', function (req, res) {
 
@@ -63,8 +86,9 @@ module.exports = function (app) {
             ? true : req.body['auto.commit.enable'];
 
         var consumer = {
+            id: id,
             group: group,
-            id: instanceId,
+            instanceId: instanceId,
             autoOffsetReset: autoOffsetReset,
             autoCommitEnable: autoCommitEnable,
             instance: undefined,
@@ -77,7 +101,7 @@ module.exports = function (app) {
 
         res.json({
             instance_id: consumer.instanceId,
-            base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.id
+            base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.instanceId
         });
 
     });
@@ -140,18 +164,13 @@ module.exports = function (app) {
 
     app.delete('/consumers/:group/instances/:id', function (req, res) {
         
-        var id = getConsumerId(req.params.group, req.params.id),
-            consumer = consumers[id];
+        var consumer = getConsumer(req.params.group, req.params.id);
 
         if (!consumer) {
             return res.status(404).json({ error: 'Consumer not found.' });
         }
 
-        consumer.instance.close(false, function () {
-            delete consumers[id];
-
-            res.json({});
-        });
+        deleteConsumer(consumer, res);
     });
 
 };
