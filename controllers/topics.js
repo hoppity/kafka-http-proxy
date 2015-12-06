@@ -1,7 +1,7 @@
 var kafka = require('kafka-node'),
     murmur = require('murmurhash-js'),
-    config = require('config-node')(),
-    client = new kafka.Client(config.kafka.zkConnect, 'kafka-rest-proxy'),
+    config = require('../config'),
+    client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId),
     producer = new kafka.HighLevelProducer(client),
     compression = config.kafka.compression || 0,
     seed = 0x9747b28c,
@@ -48,8 +48,8 @@ module.exports = function (app) {
 
             var numPartitions = client.topicPartitions[topic].length,
                 messages = req.body.records.map(function (p) {
-                    var hasKey = p.key !== null && typeof p.key !== undefined,
-                        hasPartition = p.partition !== null && typeof p.partition !== undefined,
+                    var hasKey = p.key !== null && typeof p.key !== 'undefined',
+                        hasPartition = p.partition !== null && typeof p.partition !== 'undefined',
                         result = {
                             topic: topic,
                             messages: hasKey ? new kafka.KeyedMessage(p.key, p.value) : p.value,

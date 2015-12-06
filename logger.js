@@ -1,7 +1,5 @@
 var bunyan = require('bunyan');
-var config = require('config-node')();
-var moment = require('moment');
-
+var config = require('./config');
 
 var logger = new bunyan.createLogger({
         name: config.logging.logName,

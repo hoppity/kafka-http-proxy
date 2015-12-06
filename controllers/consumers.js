@@ -1,81 +1,57 @@
 var kafka = require('kafka-node'),
     uuid = require('uuid'),
-    config = require('config-node')(),
-    consumers = {},
+    config = require('../config'),
+    consumerManager = require('../lib/consumerManager'),
+    consumers = new Object(),
     compression = config.kafka.compression || 0,
+    logger = require('../logger'),
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
     },
     getConsumer = function (group, instanceId) {
-        return consumers[getConsumerId(group, instanceId)];
+        return consumerManager.get(group, instanceId);
     },
 
     createConsumerInstance = function (consumer, topic) {
-        var client = new kafka.Client(config.kafka.zkConnect, 'kafka-rest-proxy');
-        consumer.instance = new kafka.HighLevelConsumer(client, [{
-            topic: topic
-        }], {
-            groupId: consumer.group,
-            // Auto commit config 
-            autoCommit: false,
-            // The max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms 
-            fetchMaxWaitMs: 100,
-            // This is the minimum number of bytes of messages that must be available to give a response, default 1 byte 
-            fetchMinBytes: 1,
-            // The maximum bytes to include in the message set for this partition. This helps bound the size of the response. 
-            fetchMaxBytes: 4 * 1024 * 1024, // 4MB
-            // If set true, consumer will fetch message from the given offset in the payloads 
-            fromOffset: false,
-            // If set to 'buffer', values will be returned as raw buffer objects. 
-            encoding: 'utf8'
-        });
-        consumer.instance.on('message', function (m) {
-            consumer.messages.push(m);
-        });
-        consumer.instance.on('error', function (e) {
-            console.error(e);
-            consumer.instance.close(false, function () {
-                setTimeout(function () {
-                    console.log('recreating consumer');
-                    createConsumerInstance(consumer, topic);
-                }, 1000);
-            });
-        });
-        consumer.instance.on('offsetOutOfRange', function (e) {
-            console.warn(e);
-        });
+        consumerManager.createInstance(consumer, topic);
+    },
+
+    consumerTimeoutMs = config.consumer.timoutMs,
+
+    deleteConsumer = function (consumer, cb) {
+        consumerManager.delete(consumer, cb)
+    },
+    timeoutConsumers = function () {
+        var timeoutTime = Date.now() - consumerTimeoutMs;
+        for (var i in consumers) {
+            var consumer = consumers[i];
+            if (consumer.lastPoll < timeoutTime) {
+                deleteConsumer(consumer);
+            }
+        }
     };
 
 module.exports = function (app) {
 
+    setInterval(timeoutConsumers, 10000);
+
     app.post('/consumers/:group', function (req, res) {
 
-        var group = req.params.group,
-            instanceId = uuid.v4(),
-            id = getConsumerId(group, instanceId);
-
-        var autoOffsetReset = 
-            typeof (req.body['auto.offset.reset']) === 'undefined'
-            ? 'largest' : req.body['auto.offset.reset'];
-        var autoCommitEnable =
-            typeof (req.body['auto.commit.enable']) === 'undefined'
-            ? true : req.body['auto.commit.enable'];
+        var group = req.params.group;
 
         var consumer = {
             group: group,
-            id: instanceId,
-            autoOffsetReset: autoOffsetReset,
-            autoCommitEnable: autoCommitEnable,
-            instance: undefined,
-            topics: [],
-            messages: []
+            autoOffsetReset: req.body['auto.offset.reset'],
+            autoCommitEnable: req.body['auto.commit.enable']
         };
-        consumers[id] = consumer;
+        consumerManager.add(consumer);
+
+        logger.debug(consumer, 'New consumer.');
 
         res.json({
             instance_id: consumer.instanceId,
-            base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.id
+            base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.instanceId
         });
 
     });
@@ -107,7 +83,7 @@ module.exports = function (app) {
             if (messages.length == 0) {
                 return res.json([]);
             }
-            res.json( messages.map(function (m) {
+            res.json(messages.map(function (m) {
                 return {
                     topic: m.topic,
                     partition: m.partition,
@@ -115,8 +91,12 @@ module.exports = function (app) {
                     key: m.key.toString(),
                     value: m.value
                 };
-            }) );
-            consumer.instance.commit(true);
+            }));
+            if (consumer.autoCommitEnable) {
+                logger.debug({ consumer: consumer.id }, 'Autocommit.');
+                consumer.instance.commit(true);
+            }
+            consumer.lastPoll = Date.now();
         }
     });
 
@@ -137,18 +117,13 @@ module.exports = function (app) {
 
     app.delete('/consumers/:group/instances/:id', function (req, res) {
         
-        var id = getConsumerId(req.params.group, req.params.id),
-            consumer = consumers[id];
+        var consumer = getConsumer(req.params.group, req.params.id);
 
         if (!consumer) {
             return res.status(404).json({ error: 'Consumer not found.' });
         }
 
-        consumer.instance.close(false, function () {
-            delete consumers[id];
-
-            res.json({});
-        });
+        deleteConsumer(consumer, function () { res.json({}); });
     });
 
 };
