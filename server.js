@@ -11,7 +11,12 @@ var express = require('express'),
 app.use(morgan('combined', { stream: accessLogStream }));
 
 app.use(function(req, res, next) {
-    logger.debug({req: req, res: res}, config.logging.logName + ' Info Messages');
+    var request = {
+        url: req.url,
+        method: req.method
+    };
+
+    logger.debug({req: request, res: res}, config.logging.logName + ' Info Messages');
     next();
 });
 
