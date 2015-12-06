@@ -1,6 +1,15 @@
 var request = require('request-promise'),
     args = require('yargs').argv;
 
+/*
+ * args:
+ * - baseUri
+ * - topic
+ * - key
+ * - value
+ * - partition
+ */
+
 var topicUri = args.baseUri + '/topics/' + args.topic,
     record = {};
 

@@ -1,6 +1,13 @@
 var request = require('request-promise'),
     args = require('yargs').argv;
 
+/*
+ * args:
+ * - baseUri
+ * - consumerGroup
+ * - topic
+ */
+
 var createConsumerUri = args.baseUri + '/consumers/' + args.consumerGroup,
     topicUriSuffix = '/topics/' + args.topic;
 
