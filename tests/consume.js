@@ -1,6 +1,9 @@
 var request = require('request-promise'),
     args = require('yargs').argv;
 
+var log = require('../logger.js');
+var logger = log.logger;
+
 /*
  * args:
  * - baseUri
@@ -16,7 +19,7 @@ var consumerBaseUri,
 
 return request.post(createConsumerUri)
     .then(function (r) {
-        console.log(r);
+        logger.info(r);
         var result = JSON.parse(r);
         var stop = false;
         consumerBaseUri = result.base_uri;
@@ -26,11 +29,11 @@ return request.post(createConsumerUri)
             poll = function () {
                 request.get(consumerTopicUri)
                     .then(function (r) {
-                        if (r != '[]') console.log(r);
+                        if (r != '[]') logger.info(r);
                         if (!stop) setTimeout(poll, 50);
                     })
                     .catch(function (e) {
-                        console.error(e);
+                        logger.error(e);
                         retries++;
                         if (retries <= 5 && !stop) setTimeout(poll, 50);
                     });
@@ -45,8 +48,8 @@ return request.post(createConsumerUri)
         });
     })
     .catch(function (e) {
-        console.error(e);
+        logger.error(e);
     })
-    .done(function () { 
+    .done(function () {
         if (consumerBaseUri) return request.del(consumerBaseUri);
     });

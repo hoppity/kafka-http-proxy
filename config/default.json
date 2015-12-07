@@ -1,5 +1,6 @@
 {
     "kafka": {
+        "zkConnect": "192.168.33.10:2181",
         "clientId": "kafka-http-proxy"
     },
     "logging": {

@@ -2,7 +2,8 @@ var express = require('express'),
     app = express(),
     bodyParser = require('body-parser'),
     config = require('./config'),
-    logger = require('./logger.js'),
+    log = require('./logger.js'),
+    logger = log.logger,
 
     fs = require('fs'),
     morgan = require('morgan'),
@@ -11,7 +12,14 @@ var express = require('express'),
 app.use(morgan('combined', { stream: accessLogStream }));
 
 app.use(function(req, res, next) {
-    logger.debug({req: req, res: res}, config.logging.logName + ' Info Messages');
+    var request = {
+        url: req.url,
+        method: req.method
+    };
+
+    var response = res.err || {};
+
+    logger.debug({req: request, res: response}, config.logging.logName + ' Info Messages');
     next();
 });
 
@@ -22,7 +30,7 @@ require('./controllers/consumers')(app);
 
 
 app.use(function errorHandler(err, req, res, next) {
-    console.error(err);
+    logger.error(err);
     if (res.headersSent) {
         return next(err);
     }
