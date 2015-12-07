@@ -10,4 +10,20 @@ var logger = new bunyan.createLogger({
             }]
     });
 
-module.exports = logger;
+module.exports = {
+    logger : function() {
+        return logger;
+    },
+
+    processError: function(err, msg) {
+        logger.error({err: err}, msg);
+    },
+
+    processUriError : function(err, msg) {
+        logger.error({err:{
+            message: err.error.message,
+            uri: err.request.originalUrl,
+            params: err.request.params
+        }}, msg);
+    }
+};

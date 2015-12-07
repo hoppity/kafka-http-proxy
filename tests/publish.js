@@ -1,6 +1,9 @@
 var request = require('request-promise'),
     args = require('yargs').argv;
 
+var log = require('../logger.js');
+var logger = log.logger();
+
 /*
  * args:
  * - baseUri
@@ -12,6 +15,8 @@ var request = require('request-promise'),
 
 var topicUri = args.baseUri + '/topics/' + args.topic,
     record = {};
+
+args.partition = args.partition || 0;
 
 if (args.key) record.key = args.key.toString();
 if (args.value) record.value = args.value.toString();
@@ -27,11 +32,11 @@ var options = {
         'Content-Type': 'application/vnd.kafka.v1+json'
     }
 };
-console.log(JSON.stringify(options));
+logger.debug(JSON.stringify(options));
 return request.post(options)
     .then(function (r) {
-        console.log(r);
+        logger.info(r);
     })
     .catch(function (e) {
-        console.error(e);
+        logger.error(e);
     });

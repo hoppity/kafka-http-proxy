@@ -6,12 +6,13 @@ var kafka = require('kafka-node'),
     compression = config.kafka.compression || 0,
     seed = 0x9747b28c,
 
-    logger = require('../logger.js'),
+    log = require('../logger.js'),
+    logger = log.logger(),
 
     refreshTopic = function (topic, cb) {
         client.topicExists([topic], function (err, data) {
             if (err) {
-                logger.error({error: err, request: req, response: res});
+                log.processUriError(err, 'Error refreshing topic ' + topic);
                 return cb(err);
             }
             client.refreshMetadata([topic],  function (err, data) {
@@ -24,6 +25,7 @@ var kafka = require('kafka-node'),
 module.exports = function (app) {
 
     app.put('/topics/:topic', function (req, res) {
+        logger.info('put information to topic');
 
         producer.createTopics([req.params.topic],
             false,
@@ -37,6 +39,7 @@ module.exports = function (app) {
     });
 
     app.post('/topics/:topic', function (req, res) {
+        logger.info('posting information to topic');
 
         var topic = req.params.topic;
 
@@ -58,7 +61,7 @@ module.exports = function (app) {
                         result.partition = murmur.murmur2(p.key, seed) % numPartitions;
                     }
                     else if (hasPartition) {
-                        result.partition = p.partition
+                        result.partition = p.partition;
                     }
                     return result;
                 });

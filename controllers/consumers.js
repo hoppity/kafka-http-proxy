@@ -2,9 +2,10 @@ var kafka = require('kafka-node'),
     uuid = require('uuid'),
     config = require('../config'),
     consumerManager = require('../lib/consumerManager'),
-    consumers = new Object(),
+    consumers = {},
     compression = config.kafka.compression || 0,
-    logger = require('../logger'),
+    log = require('../logger.js'),
+    logger = log.logger(),
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
@@ -116,7 +117,7 @@ module.exports = function (app) {
     });
 
     app.delete('/consumers/:group/instances/:id', function (req, res) {
-        
+
         var consumer = getConsumer(req.params.group, req.params.id);
 
         if (!consumer) {
