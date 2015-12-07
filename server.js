@@ -19,7 +19,7 @@ app.use(function(req, res, next) {
 
     var response = res.err || {};
 
-    logger.debug({req: request, res: response}, config.logging.logName + ' Info Messages');
+    logger.debug({req: request, res: response}, config.logging.logName + ' Express Server Info Messages');
     next();
 });
 
