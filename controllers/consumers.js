@@ -2,10 +2,10 @@ var kafka = require('kafka-node'),
     uuid = require('uuid'),
     config = require('../config'),
     consumerManager = require('../lib/consumerManager'),
-    consumers = {},
-    compression = config.kafka.compression || 0,
     log = require('../logger.js'),
     logger = log.logger,
+
+    topics = require('../lib/topics'),
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
@@ -22,20 +22,11 @@ var kafka = require('kafka-node'),
 
     deleteConsumer = function (consumer, cb) {
         consumerManager.delete(consumer, cb);
-    },
-    timeoutConsumers = function () {
-        var timeoutTime = Date.now() - consumerTimeoutMs;
-        for (var i in consumers) {
-            var consumer = consumers[i];
-            if (consumer.lastPoll < timeoutTime) {
-                deleteConsumer(consumer);
-            }
-        }
     };
 
 module.exports = function (app) {
 
-    setInterval(timeoutConsumers, 10000);
+    setInterval(consumerManager.timeout, 10000);
 
     app.post('/consumers/:group', function (req, res) {
 
@@ -67,20 +58,25 @@ module.exports = function (app) {
 
         if (consumer.topics.indexOf(topic) == -1) {
 
-            if (!consumer.instance) {
-                logger.debug('controllers/consumers : no consumer instance, creating');
-                createConsumerInstance(consumer, topic);
-                logger.debug('controllers/consumers : consumer instance created');
-            }
-            else {
-                //TODO: support adding topics
-            }
-            logger.debug('controllers/consumers : add topic to consumer topic list');
-            consumer.topics.push(req.params.topic);
+            topics.exists(topic, function (err, data) {
+                if (err) {
+                    return res.json({ error: 'Could not find topic ' + topic });
+                }
+                if (!consumer.instance) {
+                    logger.debug('controllers/consumers : no consumer instance, creating');
+                    createConsumerInstance(consumer, topic);
+                    logger.debug('controllers/consumers : consumer instance created');
+                }
+                else {
+                    //TODO: support adding topics
+                }
+                logger.debug('controllers/consumers : add topic to consumer topic list');
+                consumer.topics.push(req.params.topic);
 
-            setTimeout(function () {
-                res.json([]);
-            }, 1000);
+                setTimeout(function () {
+                    res.json([]);
+                }, 1000);
+            });
         }
         else {
             var messages = consumer.messages.splice(0, consumer.messages.length);
