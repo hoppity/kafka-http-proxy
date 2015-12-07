@@ -2,7 +2,7 @@ var request = require('request-promise'),
     args = require('yargs').argv;
 
 var log = require('../logger.js');
-var logger = log.logger();
+var logger = log.logger;
 
 /*
  * args:
@@ -38,5 +38,5 @@ return request.post(options)
         logger.info(r);
     })
     .catch(function (e) {
-        logger.error(e);
+        log.processUriError(e, 'unable to publish msg');
     });

@@ -2,9 +2,10 @@ var request = require('request-promise'),
     Promise = require('promise'),
     now = Date.now(),
     baseUri = 'http://localhost:8085',
-    topicUriSuffix = '/topics/test.' + now;
+    topicUriSuffix = '/topics/test.' + now,
     topicUri = baseUri + topicUriSuffix,
     createConsumerUri = baseUri + '/consumers/test.' + now;
+
 var consumerUri,
     consumerTopicUri;
 

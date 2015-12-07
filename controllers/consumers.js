@@ -5,7 +5,7 @@ var kafka = require('kafka-node'),
     consumers = {},
     compression = config.kafka.compression || 0,
     log = require('../logger.js'),
-    logger = log.logger(),
+    logger = log.logger,
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;

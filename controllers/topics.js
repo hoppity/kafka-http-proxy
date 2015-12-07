@@ -7,7 +7,7 @@ var kafka = require('kafka-node'),
     seed = 0x9747b28c,
 
     log = require('../logger.js'),
-    logger = log.logger(),
+    logger = log.logger,
 
     refreshTopic = function (topic, cb) {
         client.topicExists([topic], function (err, data) {

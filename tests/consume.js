@@ -2,7 +2,7 @@ var request = require('request-promise'),
     args = require('yargs').argv;
 
 var log = require('../logger.js');
-var logger = log.logger();
+var logger = log.logger;
 
 /*
  * args:

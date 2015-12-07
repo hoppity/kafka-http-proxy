@@ -3,7 +3,7 @@ var express = require('express'),
     bodyParser = require('body-parser'),
     config = require('./config'),
     log = require('./logger.js'),
-    logger = log.logger(),
+    logger = log.logger,
 
     fs = require('fs'),
     morgan = require('morgan'),
