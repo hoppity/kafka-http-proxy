@@ -6,7 +6,7 @@ var kafka       = require('kafka-node'),
     topics      = require('../lib/topics.js'),
     log         = require('../logger.js'),
     logger      = log.logger,
-
+    topics = require('../lib/topics'),
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
