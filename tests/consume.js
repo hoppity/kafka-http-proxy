@@ -29,13 +29,13 @@ return request.post(createConsumerUri)
             poll = function () {
                 request.get(consumerTopicUri)
                     .then(function (r) {
-                        if (r != '[]') logger.info(r);
-                        if (!stop) setTimeout(poll, 50);
+                        if (r != '[]') logger.info(r, 'consumer test polling for info');
+                        //if (!stop) setTimeout(poll, 50);
                     })
                     .catch(function (e) {
-                        logger.error(e);
+                        logger.error(e, 'consumer test trying again');
                         retries++;
-                        if (retries <= 5 && !stop) setTimeout(poll, 50);
+                        //if (retries <= 5 && !stop) setTimeout(poll, 50);
                     });
             };
         setTimeout(poll, 50);

@@ -21,7 +21,7 @@ var kafka = require('kafka-node'),
     consumerTimeoutMs = config.consumer.timoutMs,
 
     deleteConsumer = function (consumer, cb) {
-        consumerManager.delete(consumer, cb)
+        consumerManager.delete(consumer, cb);
     },
     timeoutConsumers = function () {
         var timeoutTime = Date.now() - consumerTimeoutMs;
@@ -46,9 +46,8 @@ module.exports = function (app) {
             autoOffsetReset: req.body['auto.offset.reset'],
             autoCommitEnable: req.body['auto.commit.enable']
         };
+        logger.debug(consumer, 'controllers/consumers : New consumer.');
         consumerManager.add(consumer);
-
-        logger.debug(consumer, 'New consumer.');
 
         res.json({
             instance_id: consumer.instanceId,
@@ -58,21 +57,25 @@ module.exports = function (app) {
     });
 
     app.get('/consumers/:group/instances/:id/topics/:topic', function (req, res) {
-        var consumer = getConsumer(req.params.group, req.params.id),
-            topic = req.params.topic;
+        logger.debug({params: req.params}, 'controllers/consumers : getting consumer');
+        var consumer = getConsumer(req.params.group, req.params.id);
+        var topic = req.params.topic;
 
         if (!consumer) {
-            return res.status(404).json({ error: 'Consumer not found.' });
+            return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
         }
 
         if (consumer.topics.indexOf(topic) == -1) {
 
             if (!consumer.instance) {
+                logger.debug('controllers/consumers : no consumer instance, creating');
                 createConsumerInstance(consumer, topic);
+                logger.debug('controllers/consumers : consumer instance created');
             }
             else {
                 //TODO: support adding topics
             }
+            logger.debug('controllers/consumers : add topic to consumer topic list');
             consumer.topics.push(req.params.topic);
 
             setTimeout(function () {
@@ -81,7 +84,7 @@ module.exports = function (app) {
         }
         else {
             var messages = consumer.messages.splice(0, consumer.messages.length);
-            if (messages.length == 0) {
+            if (messages.length === 0) {
                 return res.json([]);
             }
             res.json(messages.map(function (m) {
@@ -94,7 +97,7 @@ module.exports = function (app) {
                 };
             }));
             if (consumer.autoCommitEnable) {
-                logger.debug({ consumer: consumer.id }, 'Autocommit.');
+                logger.debug({ consumer: consumer.id }, 'controllers/consumers : Autocommit.');
                 consumer.instance.commit(true);
             }
             consumer.lastPoll = Date.now();
@@ -105,7 +108,7 @@ module.exports = function (app) {
         var consumer = getConsumer(req.params.group, req.params.id);
 
         if (!consumer) {
-            return res.status(404).json({ error: 'Consumer not found.' });
+            return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
         }
 
         consumer.instance.commit(true, function (e, data) {
@@ -121,7 +124,7 @@ module.exports = function (app) {
         var consumer = getConsumer(req.params.group, req.params.id);
 
         if (!consumer) {
-            return res.status(404).json({ error: 'Consumer not found.' });
+            return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
         }
 
         deleteConsumer(consumer, function () { res.json({}); });

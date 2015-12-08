@@ -5,7 +5,7 @@ var request = require('request-promise'),
     topicUriSuffix = '/topics/test.' + now,
     topicUri = baseUri + topicUriSuffix,
     createConsumerUri = baseUri + '/consumers/test.' + now;
-    
+
 var consumerUri,
     consumerTopicUri;
 
@@ -45,9 +45,9 @@ request.put(topicUri)
                 .then(function (r) {
                     if (!stop) polling = setTimeout(poll);
 
-                    var time = Date.now()
+                    var time = Date.now();
                     var result = JSON.parse(r);
-                    if (!result || result.length == 0) return;
+                    if (!result || result.length === 0) return;
 
                     var times = result.map(function (r) { return time - r.value; });
                     var max = Math.max(times);

@@ -23,7 +23,7 @@ request.put(topicUri)
     .then(function (r) {
         return new Promise(function (res) {
             setTimeout(function() {
-                res(r)
+                res(r);
             }, 1000);
         });
     })
@@ -45,7 +45,7 @@ request.put(topicUri)
         console.log('published messages: ' + JSON.stringify(r));
         return new Promise(function (res) {
             setTimeout(function() {
-                res(r)
+                res(r);
             }, 1000);
         });
     })

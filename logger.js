@@ -12,7 +12,6 @@ var logger = new bunyan.createLogger({
 
 module.exports = {
     logger : logger,
-
     processError: function(err, msg) {
         logger.error({err: err}, msg);
     },
