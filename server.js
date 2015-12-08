@@ -9,6 +9,8 @@ var express = require('express'),
     morgan = require('morgan'),
     accessLogStream = fs.createWriteStream(__dirname + '/' + config.accessLogPath, {flags: 'a'});
 
+logger.info('Starting application...');
+
 app.use(morgan('combined', { stream: accessLogStream }));
 
 app.use(function(req, res, next) {
@@ -37,4 +39,6 @@ app.use(function errorHandler(err, req, res, next) {
     res.status(500).json({ 'error_code': 500, 'message': err });
 });
 
-app.listen(config.port);
+app.listen(config.port, function () {
+    logger.info('Application listening on port ' + config.port);
+});
