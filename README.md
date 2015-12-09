@@ -30,15 +30,15 @@ Or using docker...
 Most configuration is contained in `config/default.json`. 
 
 * `kafka`
-** `zkConnect` - the Zookeeper connection string
-** `clientId` - the client identifier for the application
+ * `zkConnect` - the Zookeeper connection string
+ * `clientId` - the client identifier for the application
 * `logging`
-** `logName` - ?
-** `level` - the level of logging to output
+ * `logName` - ?
+ * `level` - the level of logging to output
 * `accessLogPath` - the path to an Apache standard compliant access log
 * `port` - the port to expose the application on
 * `consumer`
-** `timeoutMs` - the number of milliseconds to wait between polls before a consumer is deemed inactive and timed-out.
+ * `timeoutMs` - the number of milliseconds to wait between polls before a consumer is deemed inactive and timed-out.
 
 This can be changed or overriden by placing values in another file in the `config` directory and setting the `NODE_ENV` variable (e.g. `production.json` and `export NODE_ENV=production`).
 
@@ -55,12 +55,12 @@ Creates a topic with the name specified using the default topic creation setting
 `Input`
 
 * params
-** `topic` - the name of the topic to create
+ * `topic` - the name of the topic to create
 
 `Output`
 
 * JSON Response
-** `message` - "All created"
+ * `message` - "All created"
 
 E.g.
 
@@ -75,12 +75,12 @@ Publishes a message to the specified topic.
 `Input`
 
 * params
-** `topic` - the name of the topic to publish to
+ * `topic` - the name of the topic to publish to
 * JSON body
-** `records` - array of messages to publish
-*** `key`
-*** `value`
-*** `partition`
+ * `records` - array of messages to publish
+  * `key`
+  * `value`
+  * `partition`
 
 E.g.
 
@@ -100,13 +100,13 @@ Create a consumer with the specified group name.
 `Input`
 
 * params
-** `group` - the name of the consumer group
+ * `group` - the name of the consumer group
 
 `Output`
 
 * JSON response
-** `instance_id` - the identifier of the consumer instance
-** `base_uri` - the base URI for consumers to use when polling for messages
+ * `instance_id` - the identifier of the consumer instance
+ * `base_uri` - the base URI for consumers to use when polling for messages
 
 E.g.
 
@@ -124,19 +124,19 @@ Consumes messages from the topic on the specified consumer. The URI should be fo
 `Input`
 
 * params
-** `group` - the name of the consumer group
-** `instance_id` - the consumer instance id
-** `topic` - the name of the topic to consume
+ * `group` - the name of the consumer group
+ * `instance_id` - the consumer instance id
+ * `topic` - the name of the topic to consume
 
 `Output`
 
 * JSON response
-** Array of message
-*** `topic`
-*** `partition`
-*** `offset`
-*** `key`
-*** `value`
+ * Array of message
+  * `topic`
+  * `partition`
+  * `offset`
+  * `key`
+  * `value`
 
 E.g.
 
@@ -159,13 +159,13 @@ Commit the current offset of the consumer instance. The URI should be formed by 
 `Input`
 
 * params
-** `group` - the name of the consumer group
-** `instance_id` - the consumer instance id
+ * `group` - the name of the consumer group
+ * `instance_id` - the consumer instance id
 
 `Output`
 
 * JSON Response
-** Empty array
+ * Empty array
 
 E.g.
 
@@ -181,13 +181,13 @@ Shut down a consumer instance. The URI should the base_uri returned when creatin
 `Input`
 
 * params
-** `group` - the name of the consumer group
-** `instance_id` - the consumer instance id
+ * `group` - the name of the consumer group
+ * `instance_id` - the consumer instance id
 
 `Output`
 
 * JSON Response
-** Empty object
+ * Empty object
 
 E.g.
 
