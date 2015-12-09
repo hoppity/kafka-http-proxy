@@ -19,7 +19,7 @@ Get the source...
 
 Or using docker...
 
-    docker run 
+    docker run
         -p 8085:8085 `
         -e "ZOOKEEPER_CONNECT=127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181" `
         --name kafka-http-proxy
@@ -27,7 +27,7 @@ Or using docker...
 
 ## Configuration
 
-Most configuration is contained in `config/default.json`. 
+Most configuration is contained in `config/default.json`.
 
 * `kafka`
  * `zkConnect` - the Zookeeper connection string
