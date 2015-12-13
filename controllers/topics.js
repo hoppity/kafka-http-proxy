@@ -15,7 +15,7 @@ var kafka = require('kafka-node'),
 module.exports = function (app) {
 
     app.put('/topics/:topic', function (req, res) {
-        logger.info('put information to topic');
+        logger.debug('put information to topic');
 
         producer.createTopics([req.params.topic],
             false,
@@ -29,7 +29,7 @@ module.exports = function (app) {
     });
 
     app.post('/topics/:topic', function (req, res) {
-        logger.info('posting information to topic');
+        logger.trace('posting information to topic');
 
         var topic = req.params.topic;
 
