@@ -20,31 +20,11 @@ var kafka       = require('kafka-node'),
     consumerTimeoutMs = config.consumer.timoutMs,
 
     deleteConsumer = function (consumer, cb) {
-        consumerManager.delete(consumer, cb);
+        return consumerManager.delete(consumer, cb);
     },
 
     getMessages = function (consumer) {
-        var messages = consumer.messages.splice(0, consumer.messages.length);
-
-        if (messages.length === 0) {
-            return [];
-        }
-
-        if (consumer.autoCommitEnable) {
-            logger.debug({ consumer: consumer.id }, 'controllers/consumers : Autocommit.');
-            consumer.instance.commit(true);
-        }
-        consumer.lastPoll = Date.now();
-
-        return messages.map(function (m) {
-            return {
-                topic: m.topic,
-                partition: m.partition,
-                offset: m.offset,
-                key: m.key.toString(),
-                value: m.value
-            };
-        });
+        return consumerManager.getMessages(consumer);
     };
 
 
@@ -95,6 +75,7 @@ module.exports = function (app) {
                 logger.trace({messages: messages}, 'sending back messages');
                 return res.json(messages);
             });
+
         }
 
         logger.trace({params: req.params}, 'controllers/consumers : getting consumer');

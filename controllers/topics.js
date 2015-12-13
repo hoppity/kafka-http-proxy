@@ -29,6 +29,7 @@ module.exports = function (app) {
     });
 
     app.post('/topics/:topic', function (req, res) {
+<<<<<<< HEAD
         if (!req.body || !req.body.records) {
             res.status(500).json({error : "The Records field is required"}).send();
         }
@@ -36,6 +37,9 @@ module.exports = function (app) {
         if (!req.body || !req.body.records) {
             res.status(500).json({error : "The Records field is required"}).send();
         }
+=======
+        logger.trace('posting information to topic');
+>>>>>>> move logic for consuming messages to consumerManager and change some logging levels
 
         var topic = req.params.topic;
         logger.trace({topic: topic}, 'posting information to topic');
