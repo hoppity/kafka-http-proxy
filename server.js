@@ -21,7 +21,7 @@ app.use(function(req, res, next) {
 
     var response = res.err || {};
 
-    logger.debug({req: request, res: response}, config.logging.logName + ' Express Server Info Messages');
+    logger.trace({req: request, res: response}, 'Received request.');
     next();
 });
 
