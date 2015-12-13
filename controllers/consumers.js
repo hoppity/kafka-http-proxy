@@ -15,37 +15,17 @@ var kafka = require('kafka-node'),
     },
 
     createConsumerInstance = function (consumer, topic) {
-        consumerManager.createInstance(consumer, topic);
+        return consumerManager.createInstance(consumer, topic);
     },
 
     consumerTimeoutMs = config.consumer.timoutMs,
 
     deleteConsumer = function (consumer, cb) {
-        consumerManager.delete(consumer, cb);
+        return consumerManager.delete(consumer, cb);
     },
 
     getMessages = function (consumer) {
-        var messages = consumer.messages.splice(0, consumer.messages.length);
-
-        if (messages.length === 0) {
-            return [];
-        }
-
-        if (consumer.autoCommitEnable) {
-            logger.debug({ consumer: consumer.id }, 'controllers/consumers : Autocommit.');
-            consumer.instance.commit(true);
-        }
-        consumer.lastPoll = Date.now();
-
-        return messages.map(function (m) {
-            return {
-                topic: m.topic,
-                partition: m.partition,
-                offset: m.offset,
-                key: m.key.toString(),
-                value: m.value
-            };
-        });
+        return consumerManager.getMessages(consumer);
     };
 
 module.exports = function (app) {
@@ -72,7 +52,7 @@ module.exports = function (app) {
     });
 
     app.get('/consumers/:group/instances/:id/topics/:topic', function (req, res) {
-        logger.debug({params: req.params}, 'controllers/consumers : getting consumer');
+        logger.trace({params: req.params}, 'controllers/consumers : getting consumer');
         var consumer = getConsumer(req.params.group, req.params.id);
         var topic = req.params.topic;
 
@@ -101,6 +81,7 @@ module.exports = function (app) {
                     res.json( getMessages(consumer) );
                 }, 1000);
             });
+
         }
         else {
             res.json( getMessages(consumer) );
