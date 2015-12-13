@@ -10,6 +10,6 @@
     "accessLogPath": "access.log",
     "port": 8085,
     "consumer": {
-        "timeoutMs": 1000
+        "timeoutMs": 30000
     }
 }
