@@ -22,6 +22,30 @@ var kafka = require('kafka-node'),
 
     deleteConsumer = function (consumer, cb) {
         consumerManager.delete(consumer, cb);
+    },
+
+    getMessages = function (consumer) {
+        var messages = consumer.messages.splice(0, consumer.messages.length);
+
+        if (messages.length === 0) {
+            return [];
+        }
+
+        if (consumer.autoCommitEnable) {
+            logger.debug({ consumer: consumer.id }, 'controllers/consumers : Autocommit.');
+            consumer.instance.commit(true);
+        }
+        consumer.lastPoll = Date.now();
+
+        return messages.map(function (m) {
+            return {
+                topic: m.topic,
+                partition: m.partition,
+                offset: m.offset,
+                key: m.key.toString(),
+                value: m.value
+            };
+        });
     };
 
 module.exports = function (app) {
@@ -74,29 +98,12 @@ module.exports = function (app) {
                 consumer.topics.push(req.params.topic);
 
                 setTimeout(function () {
-                    res.json([]);
+                    res.json( getMessages(consumer) );
                 }, 1000);
             });
         }
         else {
-            var messages = consumer.messages.splice(0, consumer.messages.length);
-            if (messages.length === 0) {
-                return res.json([]);
-            }
-            res.json(messages.map(function (m) {
-                return {
-                    topic: m.topic,
-                    partition: m.partition,
-                    offset: m.offset,
-                    key: m.key.toString(),
-                    value: m.value
-                };
-            }));
-            if (consumer.autoCommitEnable) {
-                logger.debug({ consumer: consumer.id }, 'controllers/consumers : Autocommit.');
-                consumer.instance.commit(true);
-            }
-            consumer.lastPoll = Date.now();
+            res.json( getMessages(consumer) );
         }
     });
 
