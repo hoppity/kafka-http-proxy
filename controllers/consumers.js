@@ -77,6 +77,7 @@ module.exports = function (app) {
                 logger.trace({messages: messages}, 'sending back messages');
                 return res.json(messages);
             });
+
         }
 
         logger.trace({params: req.params}, 'controllers/consumers : getting consumer');
