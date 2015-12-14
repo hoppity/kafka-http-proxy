@@ -47,13 +47,13 @@ module.exports = function (server) {
 
                 logger.debug({socket:socket.uuid, consumer:consumer.id}, 'sockets/consumers : consumer created');
                 socket.consumer.on('message', function (m) {
-                    logger.debug(m, 'sockets/consumers : message received');
+                    logger.trace(m, 'sockets/consumers : message received');
                     socket.emit('message', m);
                 });
 
                 socket.consumer.on('error', function (e) {
                     logger.error({ error: e, consumer: consumer.id }, 'lib/consumerManager : Error in consumer instance. Closing and recreating...');
-                    socket.close();
+                    //TODO: close and recreate
                 });
 
                 socket.consumer.on('offsetOutOfRange', function (e) {
