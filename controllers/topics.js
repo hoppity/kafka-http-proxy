@@ -1,31 +1,21 @@
 var kafka = require('kafka-node'),
     murmur = require('murmurhash-js'),
     config = require('../config'),
+
+    topics = require('../lib/topics.js'),
+
     client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId),
     producer = new kafka.HighLevelProducer(client),
     compression = config.kafka.compression || 0,
     seed = 0x9747b28c,
 
     log = require('../logger.js'),
-    logger = log.logger,
-
-    refreshTopic = function (topic, cb) {
-        client.topicExists([topic], function (err, data) {
-            if (err) {
-                log.processUriError(err, 'Error refreshing topic ' + topic);
-                return cb(err);
-            }
-            client.refreshMetadata([topic],  function (err, data) {
-                if (err) return cb(err);
-                cb();
-            });
-        });
-    };
+    logger = log.logger;
 
 module.exports = function (app) {
 
     app.put('/topics/:topic', function (req, res) {
-        logger.info('put information to topic');
+        logger.debug('put information to topic');
 
         producer.createTopics([req.params.topic],
             false,
@@ -39,17 +29,17 @@ module.exports = function (app) {
     });
 
     app.post('/topics/:topic', function (req, res) {
-        logger.info('posting information to topic');
+        logger.trace('posting information to topic');
 
         var topic = req.params.topic;
 
-        refreshTopic(topic, function (err) {
+        topics.partitions(topic, function (err, data) {
             if (err) {
                 logger.error({error: err, request: req, response: res});
                 return res.status(500).json({ error: err });
             }
 
-            var numPartitions = client.topicPartitions[topic].length,
+            var numPartitions = data,
                 messages = req.body.records.map(function (p) {
                     var hasKey = p.key !== null && typeof p.key !== 'undefined',
                         hasPartition = p.partition !== null && typeof p.partition !== 'undefined',
