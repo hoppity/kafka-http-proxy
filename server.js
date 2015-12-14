@@ -30,7 +30,6 @@ app.use(bodyParser.json({ type: 'application/*+json' }));
 require('./controllers/topics')(app);
 require('./controllers/consumers')(app);
 
-
 app.use(function errorHandler(err, req, res, next) {
     logger.error(err);
     if (res.headersSent) {
@@ -38,7 +37,9 @@ app.use(function errorHandler(err, req, res, next) {
     }
     res.status(500).json({ 'error_code': 500, 'message': err });
 });
+var server = require('http').createServer(app);
+require('./sockets/consumers')(server);
 
-app.listen(config.port, function () {
+server.listen(config.port, function () {
     logger.info('Application listening on port ' + config.port);
 });
