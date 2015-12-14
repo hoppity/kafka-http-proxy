@@ -3,11 +3,11 @@ var Promise = require('promise');
 
 socket.on('connect', function () {
     console.log('connect');
+    socket.emit('subscribe', { group: 'test-group', topic: 'test-topic-2' });
 });
 
-socket.on('heartbeat', function (data) {
-    console.log('event - ' + JSON.stringify(data));
-    socket.emit('heartbeat', data);
+socket.on('message', function (data) {
+    console.log('message - ' + JSON.stringify(data));
 });
 
 socket.on('error', function (data) {
@@ -21,6 +21,6 @@ socket.on('disconnect', function () {
 return new Promise(function (res, rej) {
     process.on('SIGINT', function() {
         if (socket) socket.close();
-        setTimeout(res, 5000);
+        res();
     });
 });
