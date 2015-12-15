@@ -95,7 +95,7 @@ module.exports = function (app) {
             return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
         }
 
-        consumer.instance.commit(true, function (e, data) {
+        consumerManager.commitOffsets(consumer, function (e, data) {
             if (e) {
                 return res.status(500).json({ error: e });
             }

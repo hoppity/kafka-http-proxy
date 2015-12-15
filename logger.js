@@ -6,12 +6,14 @@ var logger = new bunyan.createLogger({
         streams: [
             {
                 level: config.logging.level,
+                src: true,
                 stream : process.stdout
             }]
     });
 
 module.exports = {
     logger : logger,
+
     processError: function(err, msg) {
         logger.error({err: err}, msg);
     },
