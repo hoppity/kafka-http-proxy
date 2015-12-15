@@ -7,7 +7,7 @@ var kafka = require('kafka-node'),
     client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId),
     producer = new kafka.HighLevelProducer(client),
     compression = config.kafka.compression || 0,
-    seed = config.kakfa.producerSeed,
+    seed = config.kafka.producerSeed,
 
     log = require('../logger.js'),
     logger = log.logger;
@@ -34,6 +34,7 @@ module.exports = function (app) {
         var topic = req.params.topic;
 
         topics.partitions(topic, function (err, data) {
+            logger.trace('loading partition data in topic controller');
             if (err) {
                 logger.error({error: err, request: req, response: res});
                 return res.status(500).json({ error: err });
@@ -45,7 +46,7 @@ module.exports = function (app) {
                         hasPartition = p.partition !== null && typeof p.partition !== 'undefined',
                         result = {
                             topic: topic,
-                            messages: hasKey ? new kafka.KeyedMessage(p.key, p.value) : p.value,
+                            messages: hasKey ? new kafka.KeyedMessage(p.key, p.value) : {value: p.value}
                         };
                     if (hasKey) {
                         result.partition = murmur.murmur2(p.key, seed) % numPartitions;
@@ -56,7 +57,9 @@ module.exports = function (app) {
                     return result;
                 });
 
+            logger.trace({data: data, messages: messages}, 'ready to send the data');
             producer.send(messages, function (err, data) {
+                logger.trace({data: data}, 'data sent');
                 if (err) {
                     logger.error({error: err, request: req, response: res});
                     return res.status(500).json({error: err});
