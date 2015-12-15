@@ -32,7 +32,7 @@ socket.on('connect', function () {
 
 socket.on('message', function (data) {
     //console.log('message - ' + JSON.stringify(data));
-    console.log('Received - ' + (Date.now() - data.value) + 'ms')
+    console.log('Received - ' + (Date.now() - data.value) + 'ms');
 });
 
 socket.on('error', function (data) {
@@ -54,4 +54,3 @@ return new Promise(function (res, rej) {
         setTimeout(teardown, 500);
     });
 });
-

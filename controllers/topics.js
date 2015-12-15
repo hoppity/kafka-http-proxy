@@ -7,7 +7,7 @@ var kafka = require('kafka-node'),
     client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId),
     producer = new kafka.HighLevelProducer(client),
     compression = config.kafka.compression || 0,
-    seed = 0x9747b28c,
+    seed = config.kakfa.producerSeed,
 
     log = require('../logger.js'),
     logger = log.logger;
@@ -61,6 +61,7 @@ module.exports = function (app) {
                     logger.error({error: err, request: req, response: res});
                     return res.status(500).json({error: err});
                 }
+
                 var topicResult = data[topic];
                 var results = [];
                 for (var i in topicResult) {
