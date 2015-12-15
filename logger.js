@@ -3,10 +3,10 @@ var config = require('./config');
 
 var logger = new bunyan.createLogger({
         name: config.logging.logName,
+        src:true,
         streams: [
             {
                 level: config.logging.level,
-                src: true,
                 stream : process.stdout
             }]
     });
