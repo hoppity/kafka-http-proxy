@@ -1,9 +1,10 @@
-var kafka = require('kafka-node'),
-    uuid = require('uuid'),
-    config = require('../config'),
+var kafka       = require('kafka-node'),
+    uuid        = require('uuid'),
+    offsets     = require('../lib/offsets.js'),
+    config      = require('../config'),
     consumerManager = require('../lib/consumerManager'),
-    log = require('../logger.js'),
-    logger = log.logger,
+    log         = require('../logger.js'),
+    logger      = log.logger,
 
     topics = require('../lib/topics'),
 
@@ -95,9 +96,9 @@ module.exports = function (app) {
             return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
         }
 
-        consumerManager.commitOffsets(consumer, function (e, data) {
-            if (e) {
-                return res.status(500).json({ error: e });
+        offsets.commitOffsets(consumer.groupId, consumer.offsetMap, function(err, data) {
+            if (err) {
+                return res.status(500).json({ error: err });
             }
             return res.json([]);
         });
