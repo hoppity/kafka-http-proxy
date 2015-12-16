@@ -3,10 +3,10 @@ var kafka       = require('kafka-node'),
     offsets     = require('../lib/offsets.js'),
     config      = require('../config'),
     consumerManager = require('../lib/consumerManager'),
+    topics      = require('../lib/topics'),
     log         = require('../logger.js'),
     logger      = log.logger,
 
-    topics = require('../lib/topics'),
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
@@ -43,13 +43,18 @@ module.exports = function (app) {
             autoCommitEnable: req.body['auto.commit.enable']
         };
         logger.debug(consumer, 'controllers/consumers : New consumer.');
-        consumerManager.add(consumer);
-
-        res.json({
-            instance_id: consumer.instanceId,
-            base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.instanceId
-        });
-
+        try {
+            consumerManager.add(consumer);
+            res.json({
+                instance_id: consumer.instanceId,
+                base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.instanceId
+            });
+        }
+        catch(err)
+        {
+            logger.error({error: err}, 'unable to add consumer');
+            res.status(500).json({error: err});
+        }
     });
 
     app.get('/consumers/:group/instances/:id/topics/:topic', function (req, res) {
@@ -90,16 +95,21 @@ module.exports = function (app) {
     });
 
     app.post('/consumers/:group/instances/:id/offsets', function (req, res) {
+        logger.trace('request received, commit offsets');
         var consumer = getConsumer(req.params.group, req.params.id);
 
         if (!consumer) {
-            return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
+            return res.status(404).json({ message: 'Consumer not found.' });
         }
 
-        offsets.commitOffsets(consumer.groupId, consumer.offsetMap, function(err, data) {
+        logger.trace({consumer : consumer.offsetMap}, 'consumer data for offset commit');
+        offsets.commitOffsets(consumer.group, consumer.offsetMap, function(err, data) {
+            logger.trace('offsets commited');
             if (err) {
-                return res.status(500).json({ error: err });
+                return res.status(500).json({ 'error': err });
             }
+
+            logger.trace('sending offset response to client');
             return res.json([]);
         });
     });
@@ -109,7 +119,7 @@ module.exports = function (app) {
         var consumer = getConsumer(req.params.group, req.params.id);
 
         if (!consumer) {
-            return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
+            return res.status(404).json({ 'message': 'Consumer not found.' });
         }
 
         deleteConsumer(consumer, function () { res.json({}); });

@@ -9,6 +9,7 @@
     "bunyan": "^1.5.1",
     "config-node": "^1.2.2",
     "express": "^4.13.3",
+    "express-domain-middleware": "^0.1.0",
     "kafka-node": "^0.2.29",
     "morgan": "^1.6.1",
     "murmurhash-js": "^1.0.0",
