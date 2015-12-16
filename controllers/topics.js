@@ -31,6 +31,10 @@ module.exports = function (app) {
     app.post('/topics/:topic', function (req, res) {
         logger.trace('posting information to topic');
 
+        if (!!req.body || !!req.body.records) {
+            res.status(500).json({error : "The Records field is required"}).send();
+        }
+
         var topic = req.params.topic;
 
         topics.partitions(topic, function (err, data) {
@@ -40,13 +44,21 @@ module.exports = function (app) {
                 return res.status(500).json({ error: err });
             }
 
+            logger.trace({data: req.body}, 'message body data');
             var numPartitions = data,
                 messages = req.body.records.map(function (p) {
+                    // ensure that the p.value is a string, else it will cause an kafka error
+                    if (!!p.value) {
+                        p.value = '';
+                    } else if (typeof p.value !== 'string') {
+                        p.value = JSON.parse(p.value);
+                    }
+
                     var hasKey = p.key !== null && typeof p.key !== 'undefined',
                         hasPartition = p.partition !== null && typeof p.partition !== 'undefined',
                         result = {
                             topic: topic,
-                            messages: hasKey ? new kafka.KeyedMessage(p.key, p.value) : {value: p.value}
+                            messages: hasKey ? new kafka.KeyedMessage(p.key, p.value) : p.value
                         };
                     if (hasKey) {
                         result.partition = murmur.murmur2(p.key, seed) % numPartitions;

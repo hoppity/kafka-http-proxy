@@ -24,13 +24,14 @@ return request.post(createConsumerUri)
         var stop = false;
         consumerBaseUri = result.base_uri;
         consumerTopicUri = result.base_uri + topicUriSuffix;
+        logger.debug({consumerUri: consumerBaseUri}, 'consumer base uri');
         logger.trace({topicUri : consumerTopicUri}, 'consumer topic uri now set');
         var polling,
             retries = 0,
             poll = function () {
                 request.get(consumerTopicUri)
                     .then(function (r) {
-                        if (r != '[]') logger.info(r, 'consumer test polling for info');
+                        if (r != '[]') logger.info({x:r}, 'consumer test polling for info');
                         if (!stop) setTimeout(poll, 50);
                     })
                     .catch(function (e) {
