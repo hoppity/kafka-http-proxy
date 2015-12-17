@@ -33,6 +33,10 @@ module.exports = function (app) {
             res.status(500).json({error : "The Records field is required"}).send();
         }
 
+        if (!req.body || !req.body.records) {
+            res.status(500).json({error : "The Records field is required"}).send();
+        }
+
         var topic = req.params.topic;
         logger.trace({topic: topic}, 'posting information to topic');
 
@@ -45,9 +49,9 @@ module.exports = function (app) {
             }
 
             logger.trace({data: req.body}, 'message body data');
+
             var numPartitions = data;
             var payloads = [];
-
 
             req.body.records.forEach(function (p) {
                 // ensure that the p.value is a string, else it will cause an kafka error
