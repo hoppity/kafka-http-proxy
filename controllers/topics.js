@@ -29,13 +29,13 @@ module.exports = function (app) {
     });
 
     app.post('/topics/:topic', function (req, res) {
-        logger.trace('posting information to topic');
-
         if (!req.body || !req.body.records) {
             res.status(500).json({error : "The Records field is required"}).send();
         }
 
         var topic = req.params.topic;
+        logger.trace({topic: topic}, 'posting information to topic');
+
 
         topics.partitions(topic, function (err, data) {
             logger.trace('loading partition data in topic controller');
@@ -45,35 +45,46 @@ module.exports = function (app) {
             }
 
             logger.trace({data: req.body}, 'message body data');
-            var numPartitions = data,
-                messages = req.body.records.map(function (p) {
-                    // ensure that the p.value is a string, else it will cause an kafka error
-                    if (!p.value) {
-                        p.value = '';
-                    } else if (typeof p.value !== 'string') {
-                        p.value = JSON.parse(p.value);
-                    }
+            var numPartitions = data;
+            var payloads = [];
 
-                    var hasKey = p.key !== null && typeof p.key !== 'undefined',
-                        hasPartition = p.partition !== null && typeof p.partition !== 'undefined',
-                        result = {
-                            topic: topic,
-                            messages: hasKey ? new kafka.KeyedMessage(p.key, p.value) : p.value
-                        };
-                    if (hasKey) {
-                        result.partition = murmur.murmur2(p.key, seed) % numPartitions;
-                    }
-                    else if (hasPartition) {
-                        result.partition = p.partition;
-                    }
-                    return result;
+
+            req.body.records.forEach(function (p) {
+                // ensure that the p.value is a string, else it will cause an kafka error
+                if (!p.value) {
+                    p.value = '';
+                } else if (typeof p.value !== 'string') {
+                    p.value = JSON.parse(p.value);
+                }
+
+                var hasKey = p.key !== null && typeof p.key !== 'undefined',
+                    hasPartition = p.partition !== null && typeof p.partition !== 'undefined',
+                    result = {
+                        topic: topic,
+                        messages: [ hasKey ? new kafka.KeyedMessage(p.key, p.value) : p.value ]
+                    };
+                if (hasKey) {
+                    result.partition = murmur.murmur2(p.key, seed) % numPartitions;
+                }
+                else if (hasPartition) {
+                    result.partition = p.partition;
+                }
+
+                var existing = payloads.find(function (m) {
+                    return m.partition == result.partition;
                 });
 
-            logger.trace({data: data, messages: messages}, 'ready to send the data');
-            producer.send(messages, function (err, data) {
+                if (existing) {
+                    return existing.messages.push(result.messages[0]);
+                }
+                payloads.push(result);
+            });
+
+            logger.trace({data: data, messages: payloads}, 'ready to send the data');
+            producer.send(payloads, function (err, data) {
                 logger.trace({data: data}, 'data sent');
                 if (err) {
-                    logger.error({error: err, request: req, response: res});
+                    logger.error({error: err, request: req, response: res}, 'error producing messages');
                     return res.status(500).json({error: err});
                 }
 
@@ -82,6 +93,7 @@ module.exports = function (app) {
                 for (var i in topicResult) {
                     results.push({ partition: i, offset: topicResult[i] });
                 }
+                logger.trace({results: results.length}, 'controllers/topics : produced messages');
                 res.json({ offsets: results });
             });
         });
