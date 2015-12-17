@@ -9,6 +9,7 @@
     "bunyan": "^1.5.1",
     "config-node": "^1.2.2",
     "express": "^4.13.3",
+    "express-domain-middleware": "^0.1.0",
     "kafka-node": "^0.2.29",
     "morgan": "^1.6.1",
     "murmurhash-js": "^1.0.0",
@@ -20,5 +21,8 @@
     "request": "^2.67.0",
     "request-promise": "^1.0.2",
     "yargs": "^3.31.0"
+  },
+  "scripts": {
+    "start": "node server.js"
   }
 }

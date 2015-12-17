@@ -1,41 +1,38 @@
-var kafka = require('kafka-node'),
-    uuid = require('uuid'),
-    config = require('../config'),
+var kafka       = require('kafka-node'),
+    uuid        = require('uuid'),
+    offsets     = require('../lib/offsets.js'),
+    config      = require('../config'),
     consumerManager = require('../lib/consumerManager'),
-    consumers = {},
-    compression = config.kafka.compression || 0,
-    log = require('../logger.js'),
-    logger = log.logger,
+    topics      = require('../lib/topics'),
+    log         = require('../logger.js'),
+    logger      = log.logger,
+
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
     },
-    getConsumer = function (group, instanceId) {
-        return consumerManager.get(group, instanceId);
+    getConsumer = function (group, instanceId, cb) {
+        return consumerManager.get(group, instanceId, cb);
     },
 
     createConsumerInstance = function (consumer, topic) {
-        consumerManager.createInstance(consumer, topic);
+        return consumerManager.createInstance(consumer, topic);
     },
 
     consumerTimeoutMs = config.consumer.timoutMs,
 
     deleteConsumer = function (consumer, cb) {
-        consumerManager.delete(consumer, cb);
+        return consumerManager.delete(consumer, cb);
     },
-    timeoutConsumers = function () {
-        var timeoutTime = Date.now() - consumerTimeoutMs;
-        for (var i in consumers) {
-            var consumer = consumers[i];
-            if (consumer.lastPoll < timeoutTime) {
-                deleteConsumer(consumer);
-            }
-        }
+
+    getMessages = function (consumer, cb) {
+        return consumerManager.getMessages(consumer, cb);
     };
+
 
 module.exports = function (app) {
 
-    setInterval(timeoutConsumers, 10000);
+    setInterval(consumerManager.timeout, 10000);
 
     app.post('/consumers/:group', function (req, res) {
 
@@ -46,88 +43,109 @@ module.exports = function (app) {
             autoOffsetReset: req.body['auto.offset.reset'],
             autoCommitEnable: req.body['auto.commit.enable']
         };
-        logger.debug(consumer, 'controllers/consumers : New consumer.');
-        consumerManager.add(consumer);
+        logger.trace(consumer, 'controllers/consumers : New consumer.');
+            consumerManager.add(consumer, function(err, data){
+                if (err) {
+                    logger.error({error: err}, 'unable to add consumer');
+                    return res.status(500).json({error: err});
+                }
 
-        res.json({
-            instance_id: consumer.instanceId,
-            base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.instanceId
-        });
-
+                return res.json({
+                    instance_id: consumer.instanceId,
+                    base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.instanceId
+                });
+            });
     });
 
     app.get('/consumers/:group/instances/:id/topics/:topic', function (req, res) {
-        logger.debug({params: req.params}, 'controllers/consumers : getting consumer');
-        var consumer = getConsumer(req.params.group, req.params.id);
-        var topic = req.params.topic;
+        function retrieveMessages(consumer) {
+            logger.trace({consumer: consumer}, 'retrieving messages');
+            return getMessages(consumer, function (err, messages){
+                if (err) {
+                    return res.status(500).json({
+                        error: err,
+                        message: 'unable to retrieve messages'
+                    });
+                }
 
-        if (!consumer) {
-            return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
+                logger.trace({messages: messages}, 'sending back messages');
+                return res.json(messages);
+            });
         }
 
-        if (consumer.topics.indexOf(topic) == -1) {
+        logger.trace({params: req.params}, 'controllers/consumers : getting consumer');
+        getConsumer(req.params.group, req.params.id, function(err, consumer){
+            var topic = req.params.topic;
 
-            if (!consumer.instance) {
-                logger.debug('controllers/consumers : no consumer instance, creating');
-                createConsumerInstance(consumer, topic);
-                logger.debug('controllers/consumers : consumer instance created');
+            if (!consumer || err) {
+                return res.status(404).json({ msg: 'Consumer not found.', error: err });
+            }
+
+            if (consumer.topics.indexOf(topic) == -1) {
+
+                topics.exists(topic, function (err, data) {
+                    if (err) {
+                        return res.json({ error: 'Could not find topic ' + topic });
+                    }
+                    if (!consumer.instance) {
+                        logger.trace('controllers/consumers : no consumer instance, creating');
+                        createConsumerInstance(consumer, topic);
+                        logger.trace('controllers/consumers : consumer instance created');
+                    }
+                    else {
+                        //TODO: support adding topics
+                    }
+                    logger.trace('controllers/consumers : add topic to consumer topic list');
+                    consumer.topics.push(req.params.topic);
+
+                    setTimeout(function () {
+                        retrieveMessages(consumer);
+                    }, 1000);
+                });
+
             }
             else {
-                //TODO: support adding topics
+                retrieveMessages(consumer);
             }
-            logger.debug('controllers/consumers : add topic to consumer topic list');
-            consumer.topics.push(req.params.topic);
-
-            setTimeout(function () {
-                res.json([]);
-            }, 1000);
-        }
-        else {
-            var messages = consumer.messages.splice(0, consumer.messages.length);
-            if (messages.length === 0) {
-                return res.json([]);
-            }
-            res.json(messages.map(function (m) {
-                return {
-                    topic: m.topic,
-                    partition: m.partition,
-                    offset: m.offset,
-                    key: m.key.toString(),
-                    value: m.value
-                };
-            }));
-            if (consumer.autoCommitEnable) {
-                logger.debug({ consumer: consumer.id }, 'controllers/consumers : Autocommit.');
-                consumer.instance.commit(true);
-            }
-            consumer.lastPoll = Date.now();
-        }
+        });
     });
 
     app.post('/consumers/:group/instances/:id/offsets', function (req, res) {
-        var consumer = getConsumer(req.params.group, req.params.id);
-
-        if (!consumer) {
-            return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
-        }
-
-        consumer.instance.commit(true, function (e, data) {
-            if (e) {
-                return res.status(500).json({ error: e });
+        logger.trace('request received, commit offsets');
+        getConsumer(req.params.group, req.params.id, function (err, consumer){
+            if (err) {
+                return res.status(404).json({ error: err });
             }
-            return res.json([]);
+
+            logger.trace({consumer : consumer.offsetMap}, 'consumer data for offset commit');
+            if (consumer.offsetMap.length === 0) {
+                return res.json([]);
+            }
+
+            offsets.commitOffsets(consumer.group, consumer.offsetMap, function(err, data) {
+                logger.trace('offsets commited');
+                if (err) {
+                    return res.status(500).json({ 'error': err });
+                }
+
+                logger.trace('sending offset response to client');
+                return res.json([]);
+            });
         });
     });
 
     app.delete('/consumers/:group/instances/:id', function (req, res) {
 
-        var consumer = getConsumer(req.params.group, req.params.id);
+        getConsumer(req.params.group, req.params.id, function (err, consumer){
+            if (!consumer || err) {
+                return res.status(404).json({ message: 'Consumer not found.', error: err });
+            }
 
-        if (!consumer) {
-            return res.status(404).json({ error: 'controllers/consumers : Consumer not found.' });
-        }
+            deleteConsumer(consumer, function () {
+                return res.json({});
+            });
+        });
 
-        deleteConsumer(consumer, function () { res.json({}); });
     });
 
 };
