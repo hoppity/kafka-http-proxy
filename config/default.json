@@ -1,15 +1,20 @@
 {
     "kafka": {
         "zkConnect": "192.168.33.10:2181",
-        "clientId": "kafka-http-proxy"
+        "clientId": "kafka-http-proxy",
+        "producerSeed" : "0x9747b28c"
     },
     "logging": {
         "logName": "kafka-http-proxy",
         "level": "debug"
     },
+    "cache": {
+        "timeout": 600
+    },
     "accessLogPath": "access.log",
     "port": 8085,
     "consumer": {
-        "timeoutMs": 30000
+        "timeoutMs": 300000,
+        "autoCommitEnable": "true"
     }
 }
