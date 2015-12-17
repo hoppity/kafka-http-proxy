@@ -48,7 +48,7 @@ module.exports = function (app) {
             var numPartitions = data,
                 messages = req.body.records.map(function (p) {
                     // ensure that the p.value is a string, else it will cause an kafka error
-                    if (!!p.value) {
+                    if (!p.value) {
                         p.value = '';
                     } else if (typeof p.value !== 'string') {
                         p.value = JSON.parse(p.value);
