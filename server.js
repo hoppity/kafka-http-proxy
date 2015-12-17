@@ -32,6 +32,12 @@ app.use(bodyParser.json({ type: 'application/*+json' }));
 require('./controllers/topics')(app);
 require('./controllers/consumers')(app);
 
+// catch all for unknown routes
+app.get('*', function(req, res) {
+    logger.warn({url: req.url}, 'unknown path sent to server');
+    res.status(404).send('Unknown route');
+});
+
 // handle any errors that manage to slip through the cracks
 process.on('uncaughtException', function(err) {
     logger.error({err : err}, 'unprocessed and unhandled exception!');
