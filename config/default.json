@@ -13,7 +13,7 @@
     },
     "logging": {
         "logName": "kafka-http-proxy",
-        "level": "trace"
+        "level": "debug"
     },
     "cache": {
         "timeout": 600
