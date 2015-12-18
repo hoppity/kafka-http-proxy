@@ -4,7 +4,6 @@ var Promise = require('promise');
 var topic = 'perf-test-' + Date.now();
 var topicUri = 'http://localhost:8085/topics/' + topic;
 var stop = false;
-var postInterval;
 
 var postInterval = setInterval(function () {
     if (stop) {
