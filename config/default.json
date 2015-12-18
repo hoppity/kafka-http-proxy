@@ -1,7 +1,6 @@
 {
     "kafka": {
         "zkConnect": "192.168.33.10:2181",
-        "producer_socket_clientId" : "",
         "producerSeed" : "0x9747b28c",
         "clientId" : {
             "socket": "kafka-socket-proxy",
