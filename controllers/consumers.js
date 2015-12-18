@@ -58,7 +58,7 @@ module.exports = function (app) {
     });
 
     app.get('/consumers/:group/instances/:id/topics/:topic', function (req, res) {
-        function retrieveMessages(consumer) {
+        function retrieveMessages(consumer, retry) {
             logger.trace({consumer: consumer}, 'retrieving messages');
             return getMessages(consumer, function (err, messages){
                 if (err) {
@@ -66,6 +66,12 @@ module.exports = function (app) {
                         error: err,
                         message: 'unable to retrieve messages'
                     });
+                }
+
+                if ((!messages || messages.length === 0) && retry){
+                    setTimeout(function() {
+                        retrieveMessages(consumer, false);
+                    }, 100);
                 }
 
                 logger.trace({messages: messages}, 'sending back messages');
@@ -99,13 +105,13 @@ module.exports = function (app) {
                     consumer.topics.push(req.params.topic);
 
                     setTimeout(function () {
-                        retrieveMessages(consumer);
+                        retrieveMessages(consumer, true);
                     }, 1000);
                 });
 
             }
             else {
-                retrieveMessages(consumer);
+                retrieveMessages(consumer, true);
             }
         });
     });
