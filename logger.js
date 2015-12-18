@@ -3,6 +3,7 @@ var config = require('./config');
 
 var logger = new bunyan.createLogger({
         name: config.logging.logName,
+        src:true,
         streams: [
             {
                 level: config.logging.level,
@@ -12,6 +13,7 @@ var logger = new bunyan.createLogger({
 
 module.exports = {
     logger : logger,
+
     processError: function(err, msg) {
         logger.error({err: err}, msg);
     },
