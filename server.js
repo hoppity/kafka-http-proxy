@@ -13,8 +13,6 @@ logger.info('Starting application...');
 
 app.use(morgan('combined', { stream: accessLogStream }));
 
-app.use(require('express-domain-middleware'));
-
 app.use(function(req, res, next) {
     var request = {
         url: req.url,

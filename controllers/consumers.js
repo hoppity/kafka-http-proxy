@@ -2,8 +2,8 @@ var kafka       = require('kafka-node'),
     uuid        = require('uuid'),
     offsets     = require('../lib/offsets.js'),
     config      = require('../config'),
-    consumerManager = require('../lib/consumerManager'),
-    topics      = require('../lib/topics'),
+    consumers   = require('../lib/consumers.js'),
+    topics      = require('../lib/topics.js'),
     log         = require('../logger.js'),
     logger      = log.logger,
 
@@ -12,27 +12,27 @@ var kafka       = require('kafka-node'),
         return group + '/' + instanceId;
     },
     getConsumer = function (group, instanceId, cb) {
-        return consumerManager.get(group, instanceId, cb);
+        return consumers.get(group, instanceId, cb);
     },
 
     createConsumerInstance = function (consumer, topic) {
-        return consumerManager.createInstance(consumer, topic);
+        return consumers.createInstance(consumer, topic);
     },
 
     consumerTimeoutMs = config.consumer.timoutMs,
 
     deleteConsumer = function (consumer, cb) {
-        return consumerManager.delete(consumer, cb);
+        return consumers.delete(consumer, cb);
     },
 
     getMessages = function (consumer, cb) {
-        return consumerManager.getMessages(consumer, cb);
+        return consumers.getMessages(consumer, cb);
     };
 
 
 module.exports = function (app) {
 
-    setInterval(consumerManager.timeout, 10000);
+    setInterval(consumers.timeout, 10000);
 
     app.post('/consumers/:group', function (req, res) {
 
@@ -44,7 +44,7 @@ module.exports = function (app) {
             autoCommitEnable: req.body['auto.commit.enable']
         };
         logger.trace(consumer, 'controllers/consumers : New consumer.');
-            consumerManager.add(consumer, function(err, data){
+            consumers.add(consumer, function(err, data){
                 if (err) {
                     logger.error({error: err}, 'unable to add consumer');
                     return res.status(500).json({error: err});
@@ -58,7 +58,7 @@ module.exports = function (app) {
     });
 
     app.get('/consumers/:group/instances/:id/topics/:topic', function (req, res) {
-        function retrieveMessages(consumer) {
+        function retrieveMessages(consumer, retry) {
             logger.trace({consumer: consumer}, 'retrieving messages');
             return getMessages(consumer, function (err, messages){
                 if (err) {
@@ -66,6 +66,12 @@ module.exports = function (app) {
                         error: err,
                         message: 'unable to retrieve messages'
                     });
+                }
+
+                if ((!messages || messages.length === 0) && retry){
+                    setTimeout(function() {
+                        retrieveMessages(consumer, false);
+                    }, 100);
                 }
 
                 logger.trace({messages: messages}, 'sending back messages');
@@ -99,13 +105,13 @@ module.exports = function (app) {
                     consumer.topics.push(req.params.topic);
 
                     setTimeout(function () {
-                        retrieveMessages(consumer);
+                        retrieveMessages(consumer, true);
                     }, 1000);
                 });
 
             }
             else {
-                retrieveMessages(consumer);
+                retrieveMessages(consumer, true);
             }
         });
     });

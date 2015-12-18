@@ -1,8 +1,15 @@
 {
     "kafka": {
         "zkConnect": "192.168.33.10:2181",
-        "clientId": "kafka-http-proxy",
-        "producerSeed" : "0x9747b28c"
+        "producerSeed" : "0x9747b28c",
+        "clientId" : {
+            "socket": "kafka-socket-proxy",
+            "http": "kafka-http-proxy"
+        },
+        "autocommit": {
+            "socket": true,
+            "http": false
+        }
     },
     "logging": {
         "logName": "kafka-http-proxy",

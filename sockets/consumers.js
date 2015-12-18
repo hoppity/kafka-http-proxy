@@ -1,7 +1,119 @@
-var logger = require('../logger.js').logger;
-var uuid = require('uuid');
-var config = require('../config.js');
-var kafka = require('kafka-node');
+var uuid        = require('uuid');
+var kafka       = require('kafka-node');
+var config      = require('../config.js');
+var logger      = require('../logger.js').logger;
+var consumers   = require('../lib/consumers.js');
+var producers   = require('../lib/producers.js');
+var _           = require('lodash');
+
+
+var waitForClient = function(client, cb) {
+    var retryCount = 0;
+
+    var clientRetry = function(){
+        setTimeout(function() {
+            if (!client.ready && retryCount < 5) {
+                logger.trace('client currently not ready, retrying');
+                retyrCount ++;
+                clientRetry();
+            } else {
+                var err = !client.ready ? {message: 'client failed to initialise'} : null;
+                if (!!cb) {
+                    cb(err);
+                }
+            }
+        }, 100);
+    };
+
+    if (!client.ready) {
+        clientRetry();
+    } else
+    {
+        if (!!cb) {
+            cb();
+        }
+    }
+};
+
+
+var setupSubscriber = function(socket, data) {
+    logger.info({data: data}, 'sockets/consumer : subscribe received');
+    var group = data.group;
+    var topic = data.topic;
+
+    if (!socket.consumer) {
+        socket.consumer = consumers.create(group, topic, config.kafka.autocommit.socket);
+    }
+
+    waitForClient(socket.consumer, function(err) {
+        logger.trace('subscriber client is now ready');
+        if (err) {
+            return logger.error({error: err}, 'failed to set up subscriber');
+        }
+
+        logger.debug({socket:socket.uuid, consumer:socket.consumer.id}, 'sockets/consumers : consumer created');
+        socket.consumer.on('message', function (m) {
+            logger.trace(m, 'sockets/consumers : message received');
+            socket.emit('message', m);
+        });
+
+        socket.consumer.on('error', function (e) {
+            logger.error({ error: e, consumer: socket.consumer.id }, 'sockets/consumer : Error in consumer instance. Closing and recreating...');
+            //TODO: close and recreate
+        });
+
+        socket.consumer.on('offsetOutOfRange', function (e) {
+            logger.warn({ error: e }, 'sockets/consumer : Received alert for offset out of range.');
+        });
+    });
+};
+
+
+var produceMessage = function(socket, data) {
+    logger.trace({message: data}, 'sending message');
+
+    if (!socket.producer.ready) {
+        logger.trace('there are no producers ready, bailing');
+        return socket.emit('produceMessageFailed', { message: 'producer failed to initialise', producerId: socket.producer.uuid});
+    }
+    logger.trace({message: data}, 'producer ready, sending the message');
+
+    socket.producer.send(data, function(err, response){
+        logger.trace({err: err, response: response}, 'message published');
+        if (err) {
+            return socket.emit('produceMessageFailed', { error: err, messageId: data.id, producerId: socket.producer.uuid});
+        }
+
+        return socket.emit('produceMessageComplete',{ messageId: data.id, producerId: socket.producer.uuid });
+    });
+};
+
+
+var setupProducer = function(socket, cb) {
+    if (!socket.producer) {
+        socket.producer = producers.create();
+        logger.trace({producer: socket.producer}, 'newly created producer');
+        socket.producer.uuid = uuid.v4();
+        logger.debug({id: socket.producer.uuid}, 'created a new publisher on the socket');
+    }
+
+    waitForClient(socket.producer, function(err){
+        logger.trace('producer client wait is over');
+        if (err) {
+            return logger.error({error: err}, 'failed to set up producer');
+        }
+
+        socket.producer.on('error', function(e){
+            logger.error({producerId: socket.producer.uuid, error: e}, 'socket producer had an error');
+        });
+
+        if (!!cb) {
+            cb();
+        }
+    });
+};
+
+
 
 module.exports = function (server) {
     var io = require('socket.io')(server);
@@ -15,52 +127,40 @@ module.exports = function (server) {
         logger.info({socket: socket.uuid}, 'sockets/consumer : connection established');
 
         socket.on('subscribe', function (data) {
-            logger.info({data: data}, 'sockets/consumer : subscribe received');
-            var group = data.group;
-            var topic = data.topic;
+            setupSubscriber(socket, data);
+        });
 
-            if (!socket.consumer) {
 
-                logger.debug('sockets/consumers : creating a kafka client');
-                var client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId);
-                
-                logger.debug('sockets/consumers : creating a new consumer');
-                var consumer = new kafka.HighLevelConsumer(client, [{
-                    topic: topic
-                }], {
-                    groupId: group,
-                    // Auto commit config
-                    autoCommit: true,
-                    autoCommitIntervalMs: 5000,
-                    // The max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms
-                    fetchMaxWaitMs: 100,
-                    // This is the minimum number of bytes of messages that must be available to give a response, default 1 byte
-                    fetchMinBytes: 1,
-                    // The maximum bytes to include in the message set for this partition. This helps bound the size of the response.
-                    fetchMaxBytes: 4 * 1024 * 1024, // 4MB
-                    // If set true, consumer will fetch message from the given offset in the payloads
-                    fromOffset: false,
-                    // If set to 'buffer', values will be returned as raw buffer objects.
-                    encoding: 'utf8'
-                });
-                socket.consumer = consumer;
-
-                logger.debug({socket:socket.uuid, consumer:consumer.id}, 'sockets/consumers : consumer created');
-                socket.consumer.on('message', function (m) {
-                    logger.trace(m, 'sockets/consumers : message received');
-                    socket.emit('message', m);
-                });
-
-                socket.consumer.on('error', function (e) {
-                    logger.error({ error: e, consumer: consumer.id }, 'lib/consumerManager : Error in consumer instance. Closing and recreating...');
-                    //TODO: close and recreate
-                });
-
-                socket.consumer.on('offsetOutOfRange', function (e) {
-                    logger.warn({ error: e }, 'lib/consumerManager : Received alert for offset out of range.');
+        var startingProducer = false;
+        var messages = [];
+        socket.on('publish', function(data) {
+            if (!socket.producer) {
+                setupProducer(socket, function(){
+                    logger.trace('producer setup complete, sending the message');
+                    messages.forEach(function(message) {
+                        produceMessage(socket, message);
+                    });
+                    produceMessage(socket, data);
+                    messages = [];
                 });
             }
+            else {
+                if (!socket.producer.ready) {
+                    // queue the messages
+                    messages.push(data);
+                    logger.trace({message: data}, 'hold message while producer starts');
+                }
+                else {
+                    logger.trace({message: data}, 'instantly sending message');
+                    produceMessage(socket, data);
+                }
+            }
         });
+
+        socket.on('error', function(err){
+            logger.error({error:err}, 'Socket level error on socket');
+        });
+
 
         socket.on('disconnect', function (data) {
             if (socket.consumer) {
