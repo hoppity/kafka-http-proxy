@@ -63,8 +63,17 @@ var setupSubscriber = function(socket, data) {
         logger.debug({socket:socket.uuid, consumer:socket.consumer.id}, 'sockets/consumers : consumer created');
         socket.consumer.on('message', function (m) {
             logger.trace(m, 'sockets/consumers : message received');
-            socket.emit('message', m);
+            var message = {
+                topic: m.topic,
+                partition: m.partition,
+                offset: m.offset,
+                key: m.key.length === 0 ? null : m.key.toString(),
+                value: m.value
+            };
+            socket.emit('message', message);
         });
+
+        socket.emit('subscribed', topic);
 
         socket.consumer.on('error', function (e) {
             logger.error({ error: e, consumer: socket.consumer.id }, 'sockets/consumer : Error in consumer instance. Closing and recreating...');
