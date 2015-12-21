@@ -14,7 +14,7 @@ var waitForClient = function(client, cb) {
         setTimeout(function() {
             if (!client.ready && retryCount < 5) {
                 logger.trace('client currently not ready, retrying');
-                retyrCount ++;
+                retryCount ++;
                 clientRetry();
             } else {
                 var err = !client.ready ? {message: 'client failed to initialise'} : null;
