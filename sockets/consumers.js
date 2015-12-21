@@ -141,6 +141,37 @@ module.exports = function (server) {
             setupSubscriber(socket, data);
         });
 
+        socket.on('createTopic', function (data) {
+            logger.info({topic: data}, 'Creating topic...');
+            var createTopic = function (topic) {
+                var producer = socket.producer;
+
+                if (!producer) {
+                    return setupProducer(socket, function(){
+                        logger.trace('producer setup complete, sending the message');
+                        createTopic(topic);
+                    });
+                }
+
+                if (!!producer && !producer.ready)
+                    return setTimeout(function () { createTopic(topic); }, 100);
+                
+                producer.createTopics(
+                    [topic],
+                    false,
+                    function (err, data) {
+                        if (err) {
+                            logger.error({error: err, topic: topic}, 'error creating topic');
+                            socket.emit('error', {error: err, message: 'Error creating topic.'})
+                            return;
+                        }
+                        logger.trace({topic: data}, 'topic created');
+                        socket.emit('topicCreated', topic);
+                    }
+                );
+            };
+            createTopic(data);
+        });
 
         var startingProducer = false;
         var messages = [];
