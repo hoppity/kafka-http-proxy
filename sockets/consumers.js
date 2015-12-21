@@ -38,6 +38,15 @@ var waitForClient = function(client, cb) {
 
 var setupSubscriber = function(socket, data) {
     logger.info({data: data}, 'sockets/consumer : subscribe received');
+    if (typeof data === 'string') {
+        try {
+            data = JSON.parse(data)
+        } catch (e) {
+            logger.warn({data: data, error: e}, 'sockets/consumer : could not parse json.');
+            socket.emit('error', 'Could not parse JSON in subscribe: ' + e);
+        }
+    }
+
     var group = data.group;
     var topic = data.topic;
 
