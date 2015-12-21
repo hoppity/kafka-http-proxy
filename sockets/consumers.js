@@ -72,13 +72,17 @@ var setupSubscriber = function(socket, data) {
 var produceMessage = function(socket, data) {
     logger.trace({message: data}, 'sending message');
 
+    if (typeof data === 'string') {
+        data = JSON.parse(data);
+    }
+
     if (!socket.producer.ready) {
         logger.trace('there are no producers ready, bailing');
         return socket.emit('produceMessageFailed', { message: 'producer failed to initialise', producerId: socket.producer.uuid});
     }
     logger.trace({message: data}, 'producer ready, sending the message');
 
-    socket.producer.send(data, function(err, response){
+    producers.publish(socket.producer, data, function(err, response){
         logger.trace({err: err, response: response}, 'message published');
         if (err) {
             return socket.emit('produceMessageFailed', { error: err, messageId: data.id, producerId: socket.producer.uuid});
@@ -112,8 +116,6 @@ var setupProducer = function(socket, cb) {
         }
     });
 };
-
-
 
 module.exports = function (server) {
     var io = require('socket.io')(server);
