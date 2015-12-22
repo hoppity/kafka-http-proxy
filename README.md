@@ -1,4 +1,4 @@
-`# kafka-http-proxy
+# kafka-http-proxy
 
 A proxy that allows applications to use Kafka via HTTP... written in NodeJS.
 
