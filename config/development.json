@@ -3,6 +3,6 @@
 		"zkConnect": "192.168.33.10:2181"
     },
     "logging": {
-        "level" : "trace"
+        "level" : "info"
     }
 }
