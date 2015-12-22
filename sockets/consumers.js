@@ -14,7 +14,7 @@ var waitForClient = function(client, cb) {
         setTimeout(function() {
             if (!client.ready && retryCount < 5) {
                 logger.trace('client currently not ready, retrying');
-                retyrCount ++;
+                retryCount ++;
                 clientRetry();
             } else {
                 var err = !client.ready ? {message: 'client failed to initialise'} : null;
@@ -38,6 +38,15 @@ var waitForClient = function(client, cb) {
 
 var setupSubscriber = function(socket, data) {
     logger.info({data: data}, 'sockets/consumer : subscribe received');
+    if (typeof data === 'string') {
+        try {
+            data = JSON.parse(data)
+        } catch (e) {
+            logger.warn({data: data, error: e}, 'sockets/consumer : could not parse json.');
+            socket.emit('error', 'Could not parse JSON in subscribe: ' + e);
+        }
+    }
+
     var group = data.group;
     var topic = data.topic;
 
@@ -54,8 +63,17 @@ var setupSubscriber = function(socket, data) {
         logger.debug({socket:socket.uuid, consumer:socket.consumer.id}, 'sockets/consumers : consumer created');
         socket.consumer.on('message', function (m) {
             logger.trace(m, 'sockets/consumers : message received');
-            socket.emit('message', m);
+            var message = {
+                topic: m.topic,
+                partition: m.partition,
+                offset: m.offset,
+                key: m.key.length === 0 ? null : m.key.toString(),
+                value: m.value
+            };
+            socket.emit('message', message);
         });
+
+        socket.emit('subscribed', topic);
 
         socket.consumer.on('error', function (e) {
             logger.error({ error: e, consumer: socket.consumer.id }, 'sockets/consumer : Error in consumer instance. Closing and recreating...');
@@ -72,13 +90,17 @@ var setupSubscriber = function(socket, data) {
 var produceMessage = function(socket, data) {
     logger.trace({message: data}, 'sending message');
 
+    if (typeof data === 'string') {
+        data = JSON.parse(data);
+    }
+
     if (!socket.producer.ready) {
         logger.trace('there are no producers ready, bailing');
         return socket.emit('produceMessageFailed', { message: 'producer failed to initialise', producerId: socket.producer.uuid});
     }
     logger.trace({message: data}, 'producer ready, sending the message');
 
-    socket.producer.send(data, function(err, response){
+    producers.publish(socket.producer, data, function(err, response){
         logger.trace({err: err, response: response}, 'message published');
         if (err) {
             return socket.emit('produceMessageFailed', { error: err, messageId: data.id, producerId: socket.producer.uuid});
@@ -113,8 +135,6 @@ var setupProducer = function(socket, cb) {
     });
 };
 
-
-
 module.exports = function (server) {
     var io = require('socket.io')(server);
 
@@ -130,6 +150,37 @@ module.exports = function (server) {
             setupSubscriber(socket, data);
         });
 
+        socket.on('createTopic', function (data) {
+            logger.info({topic: data}, 'Creating topic...');
+            var createTopic = function (topic) {
+                var producer = socket.producer;
+
+                if (!producer) {
+                    return setupProducer(socket, function(){
+                        logger.trace('producer setup complete, sending the message');
+                        createTopic(topic);
+                    });
+                }
+
+                if (!!producer && !producer.ready)
+                    return setTimeout(function () { createTopic(topic); }, 100);
+                
+                producer.createTopics(
+                    [topic],
+                    false,
+                    function (err, data) {
+                        if (err) {
+                            logger.error({error: err, topic: topic}, 'error creating topic');
+                            socket.emit('error', {error: err, message: 'Error creating topic.'})
+                            return;
+                        }
+                        logger.trace({topic: data}, 'topic created');
+                        socket.emit('topicCreated', topic);
+                    }
+                );
+            };
+            createTopic(data);
+        });
 
         var startingProducer = false;
         var messages = [];
