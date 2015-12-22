@@ -87,7 +87,7 @@ var setupSubscriber = function(socket, data) {
 };
 
 
-var produceMessage = function(socket, data) {
+var produceMessage = function(socket, data, callback) {
     logger.trace({message: data}, 'sending message');
 
     if (typeof data === 'string') {
@@ -100,8 +100,10 @@ var produceMessage = function(socket, data) {
     }
     logger.trace({message: data}, 'producer ready, sending the message');
 
-    producers.publish(socket.producer, data, function(err, response){
+    producers.publish(socket.producer, data, function(err, response) {
         logger.trace({err: err, response: response}, 'message published');
+        callback(err, response);
+
         if (err) {
             return socket.emit('produceMessageFailed', { error: err, messageId: data.id, producerId: socket.producer.uuid});
         }
@@ -185,14 +187,11 @@ module.exports = function (server) {
 
         var startingProducer = false;
         var messages = [];
-        socket.on('publish', function(data) {
+        socket.on('publish', function(data, callback) {
             if (!socket.producer) {
                 setupProducer(socket, function(){
                     logger.trace('producer setup complete, sending the message');
-                    messages.forEach(function(message) {
-                        produceMessage(socket, message);
-                    });
-                    produceMessage(socket, data);
+                    produceMessage(socket, data, callback);
                     messages = [];
                 });
             }
@@ -204,7 +203,7 @@ module.exports = function (server) {
                 }
                 else {
                     logger.trace({message: data}, 'instantly sending message');
-                    produceMessage(socket, data);
+                    produceMessage(socket, data, callback);
                 }
             }
         });
