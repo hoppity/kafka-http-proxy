@@ -150,7 +150,7 @@ module.exports = function (server) {
             setupSubscriber(socket, data);
         });
 
-        socket.on('createTopic', function (data) {
+        socket.on('createTopic', function (data, callback) {
             logger.info({topic: data}, 'Creating topic...');
             var createTopic = function (topic) {
                 var producer = socket.producer;
@@ -176,6 +176,7 @@ module.exports = function (server) {
                         }
                         logger.trace({topic: data}, 'topic created');
                         socket.emit('topicCreated', topic);
+                        callback(err, data);
                     }
                 );
             };
