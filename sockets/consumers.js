@@ -40,7 +40,7 @@ var setupSubscriber = function(socket, data) {
     logger.info({data: data}, 'sockets/consumer : subscribe received');
     if (typeof data === 'string') {
         try {
-            data = JSON.parse(data)
+            data = JSON.parse(data);
         } catch (e) {
             logger.warn({data: data, error: e}, 'sockets/consumer : could not parse json.');
             socket.emit('error', 'Could not parse JSON in subscribe: ' + e);
@@ -164,14 +164,14 @@ module.exports = function (server) {
 
                 if (!!producer && !producer.ready)
                     return setTimeout(function () { createTopic(topic); }, 100);
-                
+
                 producer.createTopics(
                     [topic],
                     false,
                     function (err, data) {
                         if (err) {
                             logger.error({error: err, topic: topic}, 'error creating topic');
-                            socket.emit('error', {error: err, message: 'Error creating topic.'})
+                            socket.emit('error', {error: err, message: 'Error creating topic.'});
                             return;
                         }
                         logger.trace({topic: data}, 'topic created');
