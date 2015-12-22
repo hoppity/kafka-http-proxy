@@ -194,4 +194,3 @@ E.g.
     $ curl -X DELETE http://localhost:8085/consume/test-group/instances/3bae5d25-b0bc-4e4a-b937-bdc75ceece39
 
     {}
-`
