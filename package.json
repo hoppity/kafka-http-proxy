@@ -18,8 +18,6 @@
     "uuid": "^2.0.1"
   },
   "devDependencies": {
-    "chai": "^3.4.1",
-    "gulp": "^3.9.0",
     "jasmine": "^2.4.1",
     "proxyquire": "^1.7.3",
     "request": "^2.67.0",
