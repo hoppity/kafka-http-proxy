@@ -33,9 +33,7 @@ module.exports = function (app) {
             res.status(500).json({error : "The Records field is required"}).send();
         }
 
-        if (!req.body || !req.body.records) {
-            res.status(500).json({error : "The Records field is required"}).send();
-        }
+        logger.trace('posting information to topic');
 
         var topic = req.params.topic;
         logger.trace({topic: topic}, 'posting information to topic');

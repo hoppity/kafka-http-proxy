@@ -4,9 +4,7 @@ var kafka       = require('kafka-node'),
     config      = require('../config'),
     consumers   = require('../lib/consumers.js'),
     topics      = require('../lib/topics.js'),
-    log         = require('../logger.js'),
-    logger      = log.logger,
-
+    log         = require('../logger.js').logger,
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
@@ -18,8 +16,6 @@ var kafka       = require('kafka-node'),
     createConsumerInstance = function (consumer, topic) {
         return consumers.createInstance(consumer, topic);
     },
-
-    consumerTimeoutMs = config.consumer.timoutMs,
 
     deleteConsumer = function (consumer, cb) {
         return consumers.delete(consumer, cb);
@@ -77,6 +73,7 @@ module.exports = function (app) {
                 logger.trace({messages: messages}, 'sending back messages');
                 return res.json(messages);
             });
+
         }
 
         logger.trace({params: req.params}, 'controllers/consumers : getting consumer');

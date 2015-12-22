@@ -17,8 +17,11 @@
     "uuid": "^2.0.1"
   },
   "devDependencies": {
+    "jasmine": "^2.4.1",
+    "proxyquire": "^1.7.3",
     "request": "^2.67.0",
     "request-promise": "^1.0.2",
+    "sinon": "^1.17.2",
     "yargs": "^3.31.0"
   },
   "scripts": {
