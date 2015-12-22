@@ -21,8 +21,8 @@ var kafka       = require('kafka-node'),
         return consumers.delete(consumer, cb);
     },
 
-    getMessages = function (consumer) {
-        return consumers.getMessages(consumer);
+    getMessages = function (consumer, cb) {
+        return consumers.getMessages(consumer, cb);
     };
 
 
