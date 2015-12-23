@@ -4,7 +4,7 @@ var kafka = require('kafka-node'),
 
     topics = require('../lib/topics.js'),
 
-    client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId),
+    client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId.http),
     producer = new kafka.HighLevelProducer(client),
     compression = config.kafka.compression || 0,
     seed = config.kafka.producerSeed,
@@ -15,9 +15,11 @@ var kafka = require('kafka-node'),
 module.exports = function (app) {
 
     app.put('/topics/:topic', function (req, res) {
-        logger.debug('put information to topic');
+        var topic = req.params.topic;
 
-        producer.createTopics([req.params.topic],
+        logger.debug({ topic: topic }, 'Creating topic.');
+
+        producer.createTopics([topic],
             false,
             function (err, data) {
                 if (err) {
@@ -72,12 +74,12 @@ module.exports = function (app) {
                     result.partition = p.partition;
                 }
 
-                var existing = payloads.find(function (m) {
+                var existing = payloads.filter(function (m) {
                     return m.partition == result.partition;
                 });
 
-                if (existing) {
-                    return existing.messages.push(result.messages[0]);
+                if (existing && existing.length) {
+                    return existing[0].messages.push(result.messages[0]);
                 }
                 payloads.push(result);
             });

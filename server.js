@@ -11,6 +11,8 @@ var express         = require('express'),
 
 logger.info('Starting application...');
 
+logger.info({ kafka: config.kafka }, 'Config.');
+
 app.use(morgan('combined', { stream: accessLogStream }));
 
 app.use(function(req, res, next) {
@@ -37,9 +39,9 @@ app.get('*', function(req, res) {
 });
 
 // handle any errors that manage to slip through the cracks
-process.on('uncaughtException', function(err) {
-    logger.error({err : err}, 'unprocessed and unhandled exception!');
-});
+//process.on('uncaughtException', function(err) {
+//    logger.error({err : err}, 'unprocessed and unhandled exception!');
+//});
 
 app.use(function errorHandler(err, req, res, next) {
     logger.error({method: req.method, url: req.url}, 'error on request ');
