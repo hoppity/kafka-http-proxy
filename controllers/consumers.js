@@ -4,7 +4,7 @@ var kafka       = require('kafka-node'),
     config      = require('../config'),
     consumers   = require('../lib/consumers.js'),
     topics      = require('../lib/topics.js'),
-    log         = require('../logger.js').logger,
+    logger      = require('../logger.js').logger,
 
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
@@ -65,7 +65,7 @@ module.exports = function (app) {
                 }
 
                 if ((!messages || messages.length === 0) && retry){
-                    setTimeout(function() {
+                    return setTimeout(function() {
                         retrieveMessages(consumer, false);
                     }, 100);
                 }
