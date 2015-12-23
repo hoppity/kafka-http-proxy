@@ -4,7 +4,7 @@ var kafka = require('kafka-node'),
 
     topics = require('../lib/topics.js'),
 
-    client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId),
+    client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId.http),
     producer = new kafka.HighLevelProducer(client),
     compression = config.kafka.compression || 0,
     seed = config.kafka.producerSeed,
