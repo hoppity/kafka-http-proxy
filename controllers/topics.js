@@ -1,7 +1,6 @@
 var kafka = require('kafka-node'),
     murmur = require('murmurhash-js'),
     config = require('../config'),
-
     topics = require('../lib/topics.js'),
 
     client = new kafka.Client(config.kafka.zkConnect, config.kafka.clientId.http),
