@@ -46,9 +46,9 @@ app.get('*', function(req, res) {
 app.use(function errorHandler(err, req, res, next) {
     logger.error({method: req.method, url: req.url}, 'error on request ');
     if (!res.headersSent) {
+        res.status(500).json({ 'error_code': 500, 'message': err });
         return next(err);
     }
-    res.status(500).json({ 'error_code': 500, 'message': err });
 });
 
 // setup the sockets

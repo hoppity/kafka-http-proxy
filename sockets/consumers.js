@@ -7,7 +7,7 @@ var producers   = require('../lib/producers.js');
 var _           = require('lodash');
 
 
-var waitForClient = function(client, cb) {
+var waitForClient = function(client, callback) {
     var retryCount = 0;
 
     var clientRetry = function(){
@@ -18,8 +18,8 @@ var waitForClient = function(client, cb) {
                 clientRetry();
             } else {
                 var err = !client.ready ? {message: 'client failed to initialise'} : null;
-                if (!!cb) {
-                    cb(err);
+                if (!!callback) {
+                    callback(err);
                 }
             }
         }, 100);
@@ -29,8 +29,8 @@ var waitForClient = function(client, cb) {
         clientRetry();
     } else
     {
-        if (!!cb) {
-            cb();
+        if (!!callback) {
+            callback();
         }
     }
 };
@@ -113,7 +113,7 @@ var produceMessage = function(socket, data, callback) {
 };
 
 
-var setupProducer = function(socket, cb) {
+var setupProducer = function(socket, callback) {
     if (!socket.producer) {
         socket.producer = producers.create();
         logger.trace({producer: socket.producer}, 'newly created producer');
@@ -131,8 +131,8 @@ var setupProducer = function(socket, cb) {
             logger.error({producerId: socket.producer.uuid, error: e}, 'socket producer had an error');
         });
 
-        if (!!cb) {
-            cb();
+        if (!!callback) {
+            callback();
         }
     });
 };

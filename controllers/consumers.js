@@ -9,20 +9,20 @@ var kafka       = require('kafka-node'),
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
     },
-    getConsumer = function (group, instanceId, cb) {
-        return consumers.get(group, instanceId, cb);
+    getConsumer = function (group, instanceId, callback) {
+        return consumers.get(group, instanceId, callback);
     },
 
     createConsumerInstance = function (consumer, topic) {
         return consumers.createInstance(consumer, topic);
     },
 
-    deleteConsumer = function (consumer, cb) {
-        return consumers.delete(consumer, cb);
+    deleteConsumer = function (consumer, callback) {
+        return consumers.delete(consumer, callback);
     },
 
-    getMessages = function (consumer, cb) {
-        return consumers.getMessages(consumer, cb);
+    getMessages = function (consumer, callback) {
+        return consumers.getMessages(consumer, callback);
     };
 
 
@@ -54,23 +54,25 @@ module.exports = function (app) {
     });
 
     app.get('/consumers/:group/instances/:id/topics/:topic', function (req, res) {
+        logger.trace({url: req.originalUrl}, 'external request to get information');
         function retrieveMessages(consumer, retry) {
-            logger.trace({consumer: consumer}, 'retrieving messages');
+            logger.trace({consumer : consumer.id}, 'retrieving messages');
             return getMessages(consumer, function (err, messages){
                 if (err) {
                     return res.status(500).json({
                         error: err,
-                        message: 'unable to retrieve messages'
+                        message: 'unable to retrieve messages',
+                        url: req.originalUrl
                     });
                 }
 
-                if ((!messages || messages.length === 0) && retry){
+                if ((!messages || messages.length === 0) && retry === true){
                     return setTimeout(function() {
-                        retrieveMessages(consumer, false);
+                        return retrieveMessages(consumer, false);
                     }, 100);
                 }
 
-                logger.trace({messages: messages}, 'sending back messages');
+                logger.trace({url: req.originalUrl, messages: messages}, 'sending back messages');
                 return res.json(messages);
             });
 
