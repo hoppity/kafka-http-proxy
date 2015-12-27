@@ -31,6 +31,7 @@ app.use(bodyParser.json({ type: 'application/*+json' }));
 
 require('./controllers/topics')(app);
 require('./controllers/consumers')(app);
+require('./controllers/health')(app);
 
 // catch all for unknown routes
 app.get('*', function(req, res) {

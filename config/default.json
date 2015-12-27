@@ -23,5 +23,8 @@
     "consumer": {
         "timeoutMs": 300000,
         "autoCommitEnable": "true"
+    },
+    "health": {
+        "okResponseText": "UP"
     }
 }
