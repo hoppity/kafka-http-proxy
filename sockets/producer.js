@@ -1,7 +1,7 @@
 var kafka       = require('kafka-node');
-var config      = require('../config.js');
-var logger      = require('../logger.js').logger;
-var producers   = require('../lib/producers.js');
+var config      = require('../config');
+var logger      = require('../logger').logger;
+var producers   = require('../lib/producers');
 var socketIO    = require('socket.io');
 var uuid        = require('uuid');
 
