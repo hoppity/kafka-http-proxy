@@ -54,6 +54,18 @@ var setupSubscriber = function(socket, data) {
         socket.consumer = consumers.create(group, topic, config.kafka.autocommit.socket);
     }
 
+    socket.consumer.on('message', function (m) {
+        logger.trace(m, 'sockets/consumers : message received');
+        var message = {
+            topic: m.topic,
+            partition: m.partition,
+            offset: m.offset,
+            key: m.key.length === 0 ? null : m.key.toString(),
+            value: m.value
+        };
+        socket.emit('message', message);
+    });
+
     waitForClient(socket.consumer, function(err) {
         logger.trace('subscriber client is now ready');
         if (err) {
@@ -61,17 +73,6 @@ var setupSubscriber = function(socket, data) {
         }
 
         logger.debug({socket:socket.uuid, consumer:socket.consumer.id}, 'sockets/consumers : consumer created');
-        socket.consumer.on('message', function (m) {
-            logger.trace(m, 'sockets/consumers : message received');
-            var message = {
-                topic: m.topic,
-                partition: m.partition,
-                offset: m.offset,
-                key: m.key.length === 0 ? null : m.key.toString(),
-                value: m.value
-            };
-            socket.emit('message', message);
-        });
 
         socket.emit('subscribed', topic);
 
@@ -214,11 +215,11 @@ module.exports = function (server) {
 
 
         socket.on('disconnect', function (data) {
+            logger.info({ socket:socket.uuid }, 'sockets/consumer : disconnected');
             if (socket.consumer) {
+                logger.info({ socket:socket.uuid, id: socket.consumer.id }, 'closing consumer');
                 socket.consumer.close(false);
             }
-
-            logger.info({socket:socket.uuid}, 'sockets/consumer : disconnected');
         });
     });
 };
