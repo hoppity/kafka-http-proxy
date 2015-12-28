@@ -43,38 +43,81 @@ describe('sockes/producer tests', function() {
     });
 
     describe('when initialising', function() {
-        it('should setup listener on /sockets/producer', function() {
+        beforeEach(function () {
             producer(serverStub);
+        });
 
+        it('should setup listener on /sockets/producer', function() {
             expect(socketIoStub.calledWith(serverStub, { path: '/sockets/producer' })).toBe(true);
         });
 
         it('should listen for connection events', function () {
-            producer(serverStub);
-
             expect(ioStub.on.calledWith('connection')).toBe(true);
         });
     });
 
-    describe('connection', function () {
-        it('should initialise producer and subscribe to producer events', function () {
+    describe('when new connection openned', function () {
+        beforeEach(function () {
             ioStub.on.onFirstCall().callsArgWith(1, socketStub);
 
             producer(serverStub);
+        });
 
+        it('should initialise producer and subscribe to producer events', function () {
             expect(socketStub.uuid).not.toBe(undefined);
             expect(producerStub.on.calledWith('ready')).toBe(true);
             expect(producerStub.on.calledWith('error')).toBe(true);
         });
-        it('should subscribe to socket events', function () {
-            ioStub.on.onFirstCall().callsArgWith(1, socketStub);
-            
-            producer(serverStub);
 
+        it('should subscribe to socket events', function () {
             expect(socketStub.on.calledWith('disconnect')).toBe(true);
             expect(socketStub.on.calledWith('createTopic')).toBe(true);
             expect(socketStub.on.calledWith('publish')).toBe(true);
         });
-    })
+    });
 
+    describe('when producer ready received', function () {
+        // first call of "on" should be socket.producer.on('ready', callback)
+        beforeEach(function () {
+            ioStub.on.onFirstCall().callsArgWith(1, socketStub);
+            producerStub.on.onFirstCall().callsArg(1);
+
+            producer(serverStub);
+        });
+
+        it('should emit ready event on socket', function () {
+            expect(socketStub.emit.calledWith('ready')).toBe(true);
+        });
+    });
+
+    describe('when producer error received', function () {
+        // second call of "on" should be socket.producer.on('error', callback)
+        beforeEach(function () {
+            ioStub.on.onFirstCall().callsArgWith(1, socketStub);
+            producerStub.on.onSecondCall().callsArg(1);
+
+            producer(serverStub);
+        });
+
+        it('should emit error event on socket', function () {
+            expect(socketStub.emit.calledWith('error')).toBe(true);
+        });
+    });
+
+    describe('when socket disconnect received', function () {
+        // first call of "on" should be socket.on('disconnect', callback)
+        beforeEach(function () {
+            ioStub.on.onFirstCall().callsArgWith(1, socketStub);
+            socketStub.on.onFirstCall().callsArg(1);
+
+            producerStub.close = sinon.spy();
+
+            producer(serverStub);
+        });
+
+        it('should close producer', function () {
+            expect(producerStub.close.called).toBe(true);
+        });
+    });
+    
 });
