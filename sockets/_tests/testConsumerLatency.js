@@ -1,11 +1,11 @@
-var socket = require('socket.io-client')('http://localhost:8085');
+var socket = require('socket.io-client')('http://localhost:8085', {path: '/sockets/consumer'});
 var request = require('request-promise');
 var Promise = require('promise');
+
 var topic = 'perf-test-' + Date.now();
 var topicUri = 'http://localhost:8085/topics/' + topic;
 var stop = false;
-
-var postInterval = setInterval(function () {
+var post = function () {
     if (stop) {
         clearInterval(postInterval);
         postInterval = undefined;
@@ -22,11 +22,22 @@ var postInterval = setInterval(function () {
         }
     };
     request.post(options);
-}, 100);
+};
+var postInterval;
 
 socket.on('connect', function () {
     console.log('connect');
-    socket.emit('subscribe', { group: topic, topic: topic });
+    socket.emit('createTopic', topic, function (e,r) {
+        if (e) {
+            console.log(e);
+            process.exit(1);
+        }
+        socket.emit('subscribe', { group: topic, topic: topic });
+    })
+});
+
+socket.on('subscribed', function () {
+    postInterval = setInterval(post, 100);
 });
 
 socket.on('message', function (data) {

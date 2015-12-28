@@ -138,9 +138,9 @@ var setupProducer = function(socket, callback) {
 };
 
 module.exports = function (server) {
-    var io = require('socket.io')(server);
+    var io = require('socket.io')(server, { path: '/sockets/consumer' });
 
-    logger.info('initialising socket.io');
+    logger.info('initialising consumer socket at /sockets/consumer');
 
     io.on('connection', function (socket) {
         socket.uuid = uuid.v4();
