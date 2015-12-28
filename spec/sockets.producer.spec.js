@@ -35,14 +35,14 @@ describe('sockes/producer tests', function() {
             '../sockets/producer',
             {
                 '../config'         : configStub,
-                '../logger'         : loggerStub,
+                '../logger'         : { logger : { info: sinon.stub(), debug: sinon.stub(), trace: sinon.stub(), warn: sinon.stub(), error: sinon.stub() } },
                 '../lib/producers'  : libProducersStub,
                 'kafka-node'        : kafkaStub,
                 'socket.io'         : socketIoStub
             });
     });
 
-    describe('init', function() {
+    describe('when initialising', function() {
         it('should setup listener on /sockets/producer', function() {
             producer(serverStub);
 

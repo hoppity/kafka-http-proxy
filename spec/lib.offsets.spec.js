@@ -12,7 +12,12 @@ describe('lib/offsets tests', function() {
         configStub      = sinon.stub();
         kafkaStub       = sinon.stub();
         loggerStub      = sinon.stub();
-        libOffset       = proxyquire('../lib/offsets.js', { '../config': configStub, '../logger': loggerStub, 'kafka-node': kafkaStub });
+        libOffset       = proxyquire(
+            '../lib/offsets.js', {
+                '../config': configStub,
+                '../logger': { logger : { info: sinon.stub(), debug: sinon.stub(), trace: sinon.stub(), warn: sinon.stub(), error: sinon.stub() } },
+                'kafka-node': kafkaStub
+            });
     });
 
     describe('committing offsets', function() {
