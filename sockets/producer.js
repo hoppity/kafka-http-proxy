@@ -47,6 +47,7 @@ module.exports = function (server) {
             if (!socket.producer.ready) {
                 errorHandler({ error: 'producer not ready', message: 'failed to create topic' });
                 callback('Failed to create topic - producer not ready.');
+                return;
             }
 
             socket.producer.createTopics(
@@ -74,6 +75,7 @@ module.exports = function (server) {
             if (!socket.producer.ready) {
                 errorHandler({ error: 'producer not ready', message: 'failed to publish' });
                 callback('Failed to publish - producer not ready.');
+                return;
             }
             logger.trace({id: socket.uuid, message: data}, 'producer ready, sending the message');
 

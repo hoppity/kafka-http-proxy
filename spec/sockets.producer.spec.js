@@ -119,5 +119,52 @@ describe('sockes/producer tests', function() {
             expect(producerStub.close.called).toBe(true);
         });
     });
-    
+
+    describe('when socket publish received', function () {
+        var data;
+        var callback;
+
+        // third call of "on" should be socket.on('publish', callback)
+        beforeEach(function () {
+            ioStub.on.onFirstCall().callsArgWith(1, socketStub);
+        });
+
+        describe('when producer not ready', function () {
+
+            beforeEach(function () {
+                data = {};
+                callback = sinon.spy();
+
+                socketStub.on.onThirdCall().callsArgWith(1, data, callback);
+                producerStub.ready = false;
+
+                producer(serverStub);
+            });
+
+            it('should return an error', function () {
+                expect(callback.calledWith('Failed to publish - producer not ready.')).toBe(true);
+                expect(libProducersStub.publish.called).toBe(false);
+            });
+        });
+
+        describe('when produce successful', function () {
+
+            beforeEach(function () {
+                data = {};
+                callback = sinon.spy();
+
+                socketStub.on.onThirdCall().callsArgWith(1, data, callback);
+                libProducersStub.publish.onFirstCall().callsArgWith(2, undefined, {});
+                producerStub.ready = true;
+
+                producer(serverStub);
+            });
+
+            it('should publish and call callback', function () {
+                expect(libProducersStub.publish.called).toBe(true);
+                expect(callback.called).toBe(true);
+            });
+        });
+    });
+
 });
