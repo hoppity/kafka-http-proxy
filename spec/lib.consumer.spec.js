@@ -13,7 +13,12 @@ describe('lib/consumers test', function(){
         kafkaStub       = sinon.stub();
         loggerStub      = sinon.stub();
         configStub      = sinon.stub();
-        libConsumer     = proxyquire('../lib/consumers.js', {'kafka-node': kafkaStub, '../logger': loggerStub, '../config': configStub});
+        libConsumer     = proxyquire(
+            '../lib/consumers.js', {
+            'kafka-node': kafkaStub,
+                '../logger': { logger : { info: sinon.stub(), debug: sinon.stub(), trace: sinon.stub(), warn: sinon.stub(), error: sinon.stub() } },
+                '../config': configStub
+            });
     });
 
 

@@ -1,13 +1,13 @@
-var socket = require('socket.io-client')('http://localhost:8085');
+var socket = require('socket.io-client')('http://localhost:8085', {path: '/sockets/consumer'});
 var Promise = require('promise');
 
 socket.on('connect', function () {
     console.log('connect');
-    socket.emit('subscribe', { group: 'test_group', topic: 'test_topic' });
+    socket.emit('subscribe', { group: 'test.group', topic: 'test.producer' });
 });
 
 socket.on('message', function (data) {
-    console.log('Received - ' + (Date.now() - data.value) + 'ms');
+    console.log('Received - ' + (Date.now() - parseInt(data.value)) + 'ms');
 });
 
 socket.on('error', function (data) {

@@ -54,7 +54,8 @@ app.use(function errorHandler(err, req, res, next) {
 
 // setup the sockets
 var server = require('http').createServer(app);
-require('./sockets/consumers')(server);
+require('./sockets/consumer')(server);
+require('./sockets/producer')(server);
 
 server.listen(config.port, function () {
     logger.info('Application listening on port ' + config.port);
