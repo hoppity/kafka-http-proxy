@@ -22,7 +22,7 @@ describe('sockes/producer tests', function() {
                                 on: sinon.stub(),
                                 close: sinon.spy(),
                                 ready: sinon.stub().returns(true), 
-                                createTopics: sinon.spy()
+                                createTopics: sinon.stub()
                               };
         libProducersStub    = {
                                 create: sinon.stub().returns(producerStub),
@@ -162,6 +162,53 @@ describe('sockes/producer tests', function() {
 
             it('should publish and call callback', function () {
                 expect(libProducersStub.publish.called).toBe(true);
+                expect(callback.called).toBe(true);
+            });
+        });
+    });
+
+    describe('when socket createTopic received', function () {
+        var data;
+        var callback;
+
+        // second call of "on" should be socket.on('publish', callback)
+        beforeEach(function () {
+            ioStub.on.onFirstCall().callsArgWith(1, socketStub);
+        });
+
+        describe('when producer not ready', function () {
+
+            beforeEach(function () {
+                data = {};
+                callback = sinon.spy();
+
+                socketStub.on.onSecondCall().callsArgWith(1, data, callback);
+                producerStub.ready = false;
+
+                producer(serverStub);
+            });
+
+            it('should return an error', function () {
+                expect(callback.calledWith('Failed to create topic - producer not ready.')).toBe(true);
+                expect(producerStub.createTopics.called).toBe(false);
+            });
+        });
+
+        describe('when create successful', function () {
+
+            beforeEach(function () {
+                data = {};
+                callback = sinon.spy();
+
+                socketStub.on.onSecondCall().callsArgWith(1, data, callback);
+                producerStub.createTopics.onFirstCall().callsArgWith(2, undefined, {});
+                producerStub.ready = true;
+
+                producer(serverStub);
+            });
+
+            it('should publish and call callback', function () {
+                expect(producerStub.createTopics.called).toBe(true);
                 expect(callback.called).toBe(true);
             });
         });
