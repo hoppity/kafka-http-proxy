@@ -1,8 +1,8 @@
 {
     "kafka": {
         "zkConnect": "192.168.33.10:2181",
-        "producerSeed" : "0x9747b28c",
-        "clientId" : {
+        "producerSeed": "0x9747b28c",
+        "clientId": {
             "socket": "kafka-socket-proxy",
             "http": "kafka-http-proxy"
         },
@@ -13,7 +13,15 @@
     },
     "logging": {
         "logName": "kafka-http-proxy",
-        "level": "trace"
+        "stdout": {
+            "level": "trace",
+            "enabled": true
+        },
+        "file": {
+            "path": "./kafka-http-proxy.log",
+            "level": "trace",
+            "enabled": false
+        }
     },
     "cache": {
         "timeout": 600
