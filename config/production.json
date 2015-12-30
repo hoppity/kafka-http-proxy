@@ -1,0 +1,13 @@
+{
+    "logging": {
+        "stdout": {
+            "level": "info",
+            "enabled": "true"
+        },
+        "file": {
+            "path": "/var/log/kafka-http-proxy",
+            "level": "debug",
+            "enabled": "true"
+        }
+    }
+}
