@@ -18,7 +18,6 @@
     "cache": {
         "timeout": 600
     },
-    "accessLogPath": "access.log",
     "port": 8085,
     "consumer": {
         "timeoutMs": 300000,

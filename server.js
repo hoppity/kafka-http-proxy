@@ -6,14 +6,13 @@ var express         = require('express'),
     logger          = log.logger,
 
     fs              = require('fs'),
-    morgan          = require('morgan'),
-    accessLogStream = fs.createWriteStream(__dirname + '/' + config.accessLogPath, {flags: 'a'});
+    morgan          = require('morgan');
 
 logger.info('Starting application...');
 
 logger.info({ kafka: config.kafka }, 'Config.');
 
-app.use(morgan('combined', { stream: accessLogStream }));
+app.use(morgan('combined'));
 
 app.use(function(req, res, next) {
     var request = {
