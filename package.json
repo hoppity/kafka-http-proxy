@@ -9,6 +9,7 @@
     "bunyan": "^1.5.1",
     "config-node": "^1.2.2",
     "express": "^4.13.3",
+    "kafka-node": "https://github.com/hoppity/kafka-node/tarball/master",
     "lodash": "^3.10.1",
     "morgan": "^1.6.1",
     "murmurhash-js": "^1.0.0",
