@@ -15,7 +15,7 @@ describe('lib/consumers test', function(){
         configStub      = sinon.stub();
         libConsumer     = proxyquire(
             '../lib/consumers.js', {
-            'kafka-node': kafkaStub,
+                'kafka-node': kafkaStub,    
                 '../logger': { logger : { info: sinon.stub(), debug: sinon.stub(), trace: sinon.stub(), warn: sinon.stub(), error: sinon.stub() } },
                 '../config': configStub
             });
@@ -121,17 +121,18 @@ describe('lib/consumers test', function(){
 
             expect(consumer.offsetMap.length).toBe(0);
             libConsumer.getMessages(consumer, function(err, data) {
-                expect(consumer.offsetMap.length).toBe(1);
-                expect(consumer.offsetMap[0].topic).toEqual(message.topic);
-                expect(consumer.offsetMap[0].partition).toEqual(message.partition);
-                expect(consumer.offsetMap[0].offset).toEqual(message.offset);
-                expect(consumer.offsetMap[0].metadata).toEqual('m');
-
                 expect(data.length).toBe(1);
                 expect(data[0].topic).toEqual(message.topic);
                 expect(data[0].partition).toEqual(message.partition);
                 expect(data[0].offset).toEqual(message.offset);
             });
+            expect(consumer.offsetMap.length).toBe(1);
+            expect(consumer.offsetMap[0].topic).toEqual(message.topic);
+            expect(consumer.offsetMap[0].partition).toEqual(message.partition);
+            expect(consumer.offsetMap[0].offset).toEqual(message.offset + 1);
+            expect(consumer.offsetMap[0].metadata).toEqual('m');
+
+
         });
 
 
@@ -140,12 +141,6 @@ describe('lib/consumers test', function(){
 
             expect(consumer.offsetMap.length).toBe(0);
             libConsumer.getMessages(consumer, function(err, data) {
-                expect(consumer.offsetMap.length).toBe(1);
-                expect(consumer.offsetMap[0].topic).toEqual('test-topic');
-                expect(consumer.offsetMap[0].partition).toEqual(0);
-                expect(consumer.offsetMap[0].offset).toEqual(2);
-                expect(consumer.offsetMap[0].metadata).toEqual('m');
-
                 expect(data.length).toBe(2);
                 expect(data[0].topic).toEqual('test-topic');
                 expect(data[0].partition).toEqual(0);
@@ -153,6 +148,11 @@ describe('lib/consumers test', function(){
 
                 expect(data[1].offset).toEqual(0);
             });
+            expect(consumer.offsetMap.length).toBe(1);
+            expect(consumer.offsetMap[0].topic).toEqual('test-topic');
+            expect(consumer.offsetMap[0].partition).toEqual(0);
+            expect(consumer.offsetMap[0].offset).toEqual(3);
+            expect(consumer.offsetMap[0].metadata).toEqual('m');
         });
     });
 
