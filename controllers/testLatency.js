@@ -1,7 +1,7 @@
 var request = require('request-promise'),
     Promise = require('promise'),
     now = Date.now(),
-    baseUri = 'http://localhost:8085',
+    baseUri = process.argv.length > 2 ? process.argv[2] : "http://localhost:8085",
     topicUriSuffix = '/topics/test.' + now,
     topicUri = baseUri + topicUriSuffix,
     createConsumerUri = baseUri + '/consumers/test.' + now;
@@ -12,11 +12,21 @@ var consumerUri,
 request.put(topicUri)
     .then(function (r) {
         console.log('created topic ' + r);
-        return request.post(createConsumerUri);
+        var options = {
+            uri: createConsumerUri,
+            method: 'POST',
+            json: {
+                'value.encode': false
+            },
+            headers: {
+                'Content-Type': 'application/vnd.kafka.v1+json'
+            }
+        }
+        return request.post(options);
     })
     .then(function (r) {
-        console.log('created consumer ' + r);
-        consumerUri = JSON.parse(r).base_uri;
+        console.log('created consumer ', r);
+        consumerUri = r.base_uri;
         consumerTopicUri = consumerUri + topicUriSuffix;
         return request.get(consumerTopicUri);
     })

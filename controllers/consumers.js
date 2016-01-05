@@ -6,6 +6,8 @@ var kafka       = require('kafka-node'),
     topics      = require('../lib/topics.js'),
     logger      = require('../logger.js').logger,
 
+    base64Regex = new RegExp("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$"),
+
     getConsumerId = function (group, instanceId) {
         return group + '/' + instanceId;
     },
@@ -37,20 +39,22 @@ module.exports = function (app) {
         var consumer = {
             group: group,
             autoOffsetReset: req.body['auto.offset.reset'],
-            autoCommitEnable: req.body['auto.commit.enable']
+            autoCommitEnable: req.body['auto.commit.enable'],
+            base64EncodeValue: typeof req.body['value.encode'] === 'undefined' ? true : req.body['value.encode']
         };
-        logger.trace(consumer, 'controllers/consumers : New consumer.');
-            consumers.add(consumer, function(err, data){
-                if (err) {
-                    logger.error({error: err}, 'unable to add consumer');
-                    return res.status(500).json({error: err});
-                }
+        logger.trace({ request: req.body, consumer: consumer }, 'controllers/consumers : New consumer.');
 
-                return res.json({
-                    instance_id: consumer.instanceId,
-                    base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.instanceId
-                });
+        consumers.add(consumer, function(err, data){
+            if (err) {
+                logger.error({error: err}, 'unable to add consumer');
+                return res.status(500).json({error: err});
+            }
+
+            return res.json({
+                instance_id: consumer.instanceId,
+                base_uri: req.protocol + '://' + req.hostname + ':' + config.port + req.path + '/instances/' + consumer.instanceId
             });
+        });
     });
 
     app.get('/consumers/:group/instances/:id/topics/:topic', function (req, res) {
@@ -72,8 +76,19 @@ module.exports = function (app) {
                     }, 100);
                 }
 
-                logger.trace({url: req.originalUrl, messages: messages}, 'sending back messages');
-                return res.json(messages);
+                var result = messages.map(function (m) {
+                    var isEncoded = base64Regex.test(m.value);
+                    if (consumer.base64EncodeValue && !isEncoded) {
+                        m.value = new Buffer(m.value).toString('base64');
+                    }
+                    else if (!consumer.base64EncodeValue && isEncoded) {
+                        m.value = new Buffer(m.value, 'base64').toString();
+                    }
+                    return m;
+                });
+
+                logger.trace({url: req.originalUrl, messages: result}, 'sending back messages');
+                return res.json(result);
             });
 
         }
