@@ -1,0 +1,15 @@
+[Unit]
+Description=Kafka HTTP Proxy
+
+[Service]
+User=kafkarestproxy
+WorkingDirectory=/opt/kafka-http-proxy
+ExecStart=/usr/bin/node ./server.js
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=42s
+EnvironmentFile=/etc/sysconfig/kafka-http-proxy
+
+[Install]
+WantedBy=multi-user.target
