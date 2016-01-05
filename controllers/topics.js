@@ -9,7 +9,9 @@ var kafka = require('kafka-node'),
     seed = config.kafka.producerSeed,
 
     log = require('../logger.js'),
-    logger = log.logger;
+    logger = log.logger,
+
+    base64Regex = new RegExp("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
 
 module.exports = function (app) {
 
@@ -43,8 +45,8 @@ module.exports = function (app) {
         topics.partitions(topic, function (err, data) {
             logger.trace('loading partition data in topic controller');
             if (err) {
-                logger.error({error: err, request: req, response: res});
-                return res.status(500).json({ error: err });
+                logger.error({error: err}, 'error getting partitions');
+                return res.status(500).json({ error: err }, 'error getting partitions');
             }
 
             logger.trace({data: req.body}, 'message body data');
@@ -58,6 +60,8 @@ module.exports = function (app) {
                     p.value = '';
                 } else if (typeof p.value !== 'string') {
                     p.value = JSON.parse(p.value);
+                } else if (base64Regex.test(p.value)) {
+                    p.value = new Buffer(p.value, 'base64').toString();
                 }
 
                 var hasKey = p.key !== null && typeof p.key !== 'undefined',
