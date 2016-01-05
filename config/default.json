@@ -33,5 +33,9 @@
     },
     "health": {
         "okResponseText": "UP"
+    },
+    "http": {
+        "jsonContentType": "application/*+json",
+        "requestEntityLimit": "16mb"
     }
 }

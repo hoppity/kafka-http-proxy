@@ -26,7 +26,7 @@ app.use(function(req, res, next) {
     next();
 });
 
-app.use(bodyParser.json({ type: 'application/*+json' }));
+app.use(bodyParser.json({ type: config.http.jsonContentType, limit: config.http.requestEntityLimit }));
 
 require('./controllers/topics')(app);
 require('./controllers/consumers')(app);
