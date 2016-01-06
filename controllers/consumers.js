@@ -87,7 +87,7 @@ module.exports = function (app) {
                     return m;
                 });
 
-                logger.trace({url: req.originalUrl, messages: result}, 'sending back messages');
+                logger.debug({url: req.originalUrl, messages: result.length}, 'sending back messages');
                 return res.json(result);
             });
 
@@ -131,24 +131,24 @@ module.exports = function (app) {
     });
 
     app.post('/consumers/:group/instances/:id/offsets', function (req, res) {
-        logger.trace('request received, commit offsets');
+        logger.trace({consumer:req.params.id},'request received, commit offsets');
         getConsumer(req.params.group, req.params.id, function (err, consumer){
             if (err) {
                 return res.status(404).json({ error: err });
             }
 
-            logger.trace({consumer : consumer.offsetMap}, 'consumer data for offset commit');
+            logger.trace({consumer: consumer.id, offsetMap : consumer.offsetMap}, 'consumer data for offset commit');
             if (consumer.offsetMap.length === 0) {
                 return res.json([]);
             }
 
             offsets.commitOffsets(consumer.group, consumer.offsetMap, function(err, data) {
-                logger.trace('offsets commited');
+                logger.debug({consumer: consumer.id, offsetMap : consumer.offsetMap}, 'offsets commited');
                 if (err) {
                     return res.status(500).json({ 'error': err });
                 }
 
-                logger.trace('sending offset response to client');
+                logger.trace({consumer: consumer.id}, 'sending offset response to client');
                 return res.json([]);
             });
         });
