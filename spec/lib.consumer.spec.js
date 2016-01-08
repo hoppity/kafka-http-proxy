@@ -131,22 +131,20 @@ describe('lib/consumers test', function(){
             expect(consumer.offsetMap[0].partition).toEqual(message.partition);
             expect(consumer.offsetMap[0].offset).toEqual(message.offset + 1);
             expect(consumer.offsetMap[0].metadata).toEqual('m');
-
-
         });
 
 
         it('should only return one message if two exist with same topic and partition', function() {
-            consumer.messages = [createSampleMessage(2), createSampleMessage(0)];
+            consumer.messages = [createSampleMessage(0), createSampleMessage(1), createSampleMessage(2)];
 
             expect(consumer.offsetMap.length).toBe(0);
             libConsumer.getMessages(consumer, function(err, data) {
-                expect(data.length).toBe(2);
+                expect(data.length).toBe(3);
                 expect(data[0].topic).toEqual('test-topic');
                 expect(data[0].partition).toEqual(0);
-                expect(data[0].offset).toEqual(2);
-
-                expect(data[1].offset).toEqual(0);
+                expect(data[0].offset).toEqual(0);
+                expect(data[1].offset).toEqual(1);
+                expect(data[2].offset).toEqual(2);
             });
             expect(consumer.offsetMap.length).toBe(1);
             expect(consumer.offsetMap[0].topic).toEqual('test-topic');
