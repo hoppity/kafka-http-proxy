@@ -89,6 +89,53 @@ describe('lib/consumers test', function(){
                 expect(err.message).toEqual('Consumer with ID test-group/test-id already exists.');
             });
         });
+
+        describe('when requestMaxMessages not configured', function () {
+            it('adds a consumer with requestMaxMessages not set', function() {
+                libConsumer.add({
+                    instanceId : 'test-id',
+                    group : 'test-group'
+                }, function(err, data) {
+                    expect(data.requestMaxMessages).toBe(undefined);
+                });
+            });
+
+            it('adds a consumer with requestMaxMessages set to specified value', function() {
+                libConsumer.add({
+                    instanceId : 'test-id',
+                    group : 'test-group',
+                    requestMaxMessages: 10
+                }, function(err, data) {
+                    expect(data.requestMaxMessages).toBe(10);
+                });
+            });
+        });
+
+        describe('when requestMaxMessages configured', function () {
+            beforeEach(function () {
+                configStub.consumer.requestMaxMessages = 100;
+            });
+
+            it('adds a consumer with requestMaxMessages set to specified value', function() {
+                libConsumer.add({
+                    instanceId : 'test-id',
+                    group : 'test-group',
+                    requestMaxMessages: 10
+                }, function(err, data) {
+                    expect(data.requestMaxMessages).toBe(10);
+                });
+            });
+
+            it('adds a consumer with requestMaxMessages set to config value', function() {
+
+                libConsumer.add({
+                    instanceId : 'test-id',
+                    group : 'test-group'
+                }, function(err, data) {
+                    expect(data.requestMaxMessages).toBe(100);
+                });
+            });
+        });
     });
 
 
@@ -151,6 +198,31 @@ describe('lib/consumers test', function(){
             expect(consumer.offsetMap[0].partition).toEqual(0);
             expect(consumer.offsetMap[0].offset).toEqual(3);
             expect(consumer.offsetMap[0].metadata).toEqual('m');
+        });
+
+        describe('when consumer has requestMaxMessages', function () {
+            beforeEach(function () {
+                consumer.requestMaxMessages = 2;
+            });
+
+            it('should return no more than maximum messages', function() {
+                consumer.messages = [createSampleMessage(0), createSampleMessage(1), createSampleMessage(2)];
+
+                expect(consumer.offsetMap.length).toBe(0);
+                libConsumer.getMessages(consumer, function(err, data) {
+                    expect(data.length).toBe(2);
+                    expect(data[0].topic).toEqual('test-topic');
+                    expect(data[0].partition).toEqual(0);
+                    expect(data[0].offset).toEqual(0);
+                    expect(data[1].offset).toEqual(1);
+                });
+                expect(consumer.offsetMap.length).toBe(1);
+                expect(consumer.offsetMap[0].topic).toEqual('test-topic');
+                expect(consumer.offsetMap[0].partition).toEqual(0);
+                expect(consumer.offsetMap[0].offset).toEqual(2);
+                expect(consumer.offsetMap[0].metadata).toEqual('m');
+                expect(consumer.messages.length).toEqual(1);
+            });
         });
     });
 
