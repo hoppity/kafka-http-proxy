@@ -29,7 +29,8 @@
     "port": 8085,
     "consumer": {
         "timeoutMs": 300000,
-        "autoCommitEnable": "true"
+        "autoCommitEnable": "true",
+        "requestMaxMessages": 100
     },
     "health": {
         "okResponseText": "UP"
