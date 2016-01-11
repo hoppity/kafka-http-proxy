@@ -1,5 +1,6 @@
 var request = require('request-promise'),
     Promise = require('promise'),
+    _ = require('lodash'),
     now = Date.now(),
     baseUri = 'http://localhost:8085',
     topicUriSuffix = '/topics/test.' + now,
@@ -11,12 +12,23 @@ var consumerUri,
 
 request.put(topicUri)
     .then(function (r) {
-        console.log('created topic ' + r);
-        return request.post(createConsumerUri);
+        console.log('created topic', r);
+        var options = {
+            uri: createConsumerUri,
+            method: 'POST',
+            json: {
+                'value.encode': false,
+                'request.max.messages': 20
+            },
+            headers: {
+                'Content-Type': 'application/vnd.kafka.v1+json'
+            }
+        }
+        return request.post(options);
     })
     .then(function (r) {
-        console.log('created consumer ' + r);
-        consumerUri = JSON.parse(r).base_uri;
+        console.log('created consumer', r);
+        consumerUri = r.base_uri;
         consumerTopicUri = consumerUri + topicUriSuffix;
         return request.get(consumerTopicUri);
     })
@@ -33,7 +45,11 @@ request.put(topicUri)
             uri: topicUri,
             method: 'POST',
             json: {
-                records: [{ key: '123', value: '456' }]
+                records: _
+                    .range(0, 51, 1)
+                    .map(function (i) {
+                        return { key: (i % 2).toString(), value: i.toString() };
+                    })
             },
             headers: {
                 'Content-Type': 'application/vnd.kafka.v1+json'
@@ -75,7 +91,7 @@ request.put(topicUri)
         });
     })
     .then(function (r) {
-        console.log('got messages: ' + JSON.stringify(r));
+        console.log('got ' + r.length + ' messages' + JSON.stringify(r));
         return request.post(consumerUri + '/offsets');
     })
     .then(function (r) {

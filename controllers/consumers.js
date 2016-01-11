@@ -40,7 +40,8 @@ module.exports = function (app) {
             group: group,
             autoOffsetReset: req.body['auto.offset.reset'],
             autoCommitEnable: req.body['auto.commit.enable'],
-            base64EncodeValue: typeof req.body['value.encode'] === 'undefined' ? true : req.body['value.encode']
+            base64EncodeValue: typeof req.body['value.encode'] === 'undefined' ? true : req.body['value.encode'],
+            requestMaxMessages: req.body['request.max.messages']
         };
         logger.trace({ request: req.body, consumer: consumer }, 'controllers/consumers : New consumer.');
 
