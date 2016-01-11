@@ -101,6 +101,11 @@ Create a consumer with the specified group name.
 
 * params
  * `group` - the name of the consumer group
+* JSON body
+ * `auto.offset.reset` - the point to automatically reset the offset to if the consumer group does not exist. Options: smallest, largest. Default: largest
+ * `auto.commit.enable` - enable/disable the consumer to autocommit on the server side. When true, the server will commit the offset after every get request. When false, you must commit manually (as below). Default: true.
+ * `value.encode` - enable/disable base64 encoded messages to be returned from the consumer. Default: true
+ * `request.max.messages` - the number of messages to return in a single get request. Configurable in config.consumer.requestMaxMessages. Default: 100.
 
 `Output`
 
