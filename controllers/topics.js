@@ -24,8 +24,8 @@ module.exports = function (app) {
             false,
             function (err, data) {
                 if (err) {
-                    logger.error({error: err, request: req, response: res});
-                    return res.status(500).json({ error: err });
+                    logger.error({error: err, topic: topic}, 'error creating topic');
+                    return res.status(500).json({ error: err, message: 'Error creating topic.' });
                 }
                 res.json({ message: data });
             });
@@ -91,7 +91,7 @@ module.exports = function (app) {
             producer.send(payloads, function (err, data) {
                 logger.trace({data: data}, 'data sent');
                 if (err) {
-                    logger.error({error: err, request: req, response: res}, 'error producing messages');
+                    logger.error({error: err}, 'error producing messages');
                     return res.status(500).json({error: err});
                 }
 
